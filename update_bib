@@ -29,14 +29,13 @@ r"""
 TODO:
     - add a flag so that the script checks all of the bibtex entries using mr-reference or mrlookup.
     - find the best match when mrlookup returns multiple entries!
-    - add dependencies
-    - reconfigure so that the bibtex entries are printed in the same order to make
-      it easier to diff the output. If this works then copy the original file to
-      *.bak and put the updated file in its place.
+    - work out and add dependencies
+    - copy the original file to *.bak and put the updated file in its place.
 
 """
 
 import urllib, re, sys, os
+from collections import OrderedDict
 from optparse import OptionParser
 
 def print_to_user(comment):
@@ -57,7 +56,7 @@ def bad_match(one,two):
     """
     return fuzz.ratio(tex_clean.sub('',one).lower(), tex_clean.sub('',two).lower())<90
 
-class bibtex(dict):
+class Bibtex(OrderedDict):
     r"""
     The bibtex class holds all of the data for one bibtex entry. As the bibtex
     file is a text file to extract the data from it we use a collection of
@@ -88,7 +87,7 @@ class bibtex(dict):
     # We match either "First Last" or "Last, First"
     author=re.compile(r'(([A-Z][A-Za-z\.]* )*(?P<au>\w*))|(?P<Au>\w*,)',re.DOTALL)
 
-    # only_one will find a match if the mrlookup page contained a single match
+    # only_one will find a match if the mrlookup page contains a single match
     only_one=re.compile('Retrieved all documents')
 
     # regular expression to find the bibtex entry on the mrlookup page
@@ -108,9 +107,10 @@ class bibtex(dict):
 
         EXAMPLE:
         """
+        super(Bibtex, self).__init__()   # initialise as an OrderedDict
         entry=self.parse_bibtex_entry.search(string)
         if entry is None:
-            #rint_to_user( 'PARSE ERROR: %s'%(string) )
+            #print_to_user( 'PARSE ERROR: %s'%(string) )
             self.string=string
         else:
             self.pub_type=entry.group('pub_type').strip().lower()
@@ -125,8 +125,8 @@ class bibtex(dict):
 
     def str(self):
         if hasattr(self,'pub_type'):
-            return '@%s{%s,\n  %s\n}' % (self.pub_type, self.cite_key, ',\n  '.join('%s = {%s}'%(key,self[key])
-                for key in sorted(self.keys()) if key not in self.ignore))
+            return '@%s{%s,\n  %s\n}' % (self.pub_type.upper(), self.cite_key, ',\n  '.join('%s = {%s}'%(key,self[key])
+                for key in self.keys() if key not in self.ignore))
         else:
             return self.string
 
@@ -193,7 +193,7 @@ class bibtex(dict):
             if not mr_entry is None:
                 print_to_user( '!FOUND MR entry for %s' % self.cite_key )
                 # We extract the updated entry and use it to update all fields
-                new_self=bibtex(mr_entry.group('mr'))
+                new_self=Bibtex(mr_entry.group('mr'))
                 if new_self.pub_type!=self.pub_type:
                     print_to_user('*Publication type mismatch for %s!' % self.cite_key)
                 elif preprint and int(new_self['year'])<int(self['year']):
@@ -255,7 +255,7 @@ def main():
 
     for bibentry in bibtex_entry.finditer(papers):
         if not bibentry is None:
-            bt=bibtex(bibentry.group())
+            bt=Bibtex(bibentry.group())
             if hasattr(bt, 'pub_type'):
                 if bt.pub_type in bibtex_pub_types:
                     bt.mr_update(verbose, warn)
