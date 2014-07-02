@@ -22,12 +22,12 @@ are advised to check the updated file carefully!
 Andrew Mathas
 
 TODO:
-    - add a flag so that the script checks all of the bibtex entries using mr-reference or mrlookup.
-    - find the best match when mrlookup returns multiple entries!
-    - add dependencies
-    - reconfigure so that the bibtex entries are printed in the same order to make
-      it easier to diff the output. If this works then copy the original file to
-      *.bak and put the updated file in its place.
+ * add a flag so that the script checks all of the bibtex entries using mr-reference or mrlookup.
+ * find the best match when mrlookup returns multiple entries! 
+ * add dependencies
+ * reconfigure so that the bibtex entries are printed in the same order to make
+   it easier to diff the output. If this works then copy the original file to
+   *.bak and put the updated file in its place.
 
 
 * Quick summary
