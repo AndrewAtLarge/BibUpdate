@@ -36,6 +36,7 @@ TODO:
 
 import urllib, re, sys, os
 from collections import OrderedDict
+from fuzzywuzzy import fuzz
 from optparse import OptionParser
 
 def print_to_user(comment):
@@ -44,10 +45,9 @@ def print_to_user(comment):
     """
     print>>sys.stdout, comment
 
-
+# regular expression for cleaning TeX from title etc
 tex_clean=re.compile(r'[{}\'"_$]')
 
-from fuzzywuzzy import fuzz
 def bad_match(one,two):
     r"""
     Returns True or False depending on whether or not the strings one and two
@@ -98,20 +98,20 @@ class Bibtex(OrderedDict):
 
     """
     A class which contains all of the information in a bibtex entry for a paper.
-    It is called with a string which contains a bibtex entry and it returns
+    It is called with a string <bib_string> that contains a bibtex entry and it returns
     essentially a dictionary with whistles for the bibtex entry.
     """
-    def __init__(self, string):
+    def __init__(self, bib_string):
         """
-        Given a string contain a bibtex entry return the corresponding bibtex class.
+        Given a string <bib_string> that contains a bibtex entry return the corresponding Bibtex class.
 
         EXAMPLE:
         """
         super(Bibtex, self).__init__()   # initialise as an OrderedDict
-        entry=self.parse_bibtex_entry.search(string)
+        entry=self.parse_bibtex_entry.search(bib_string)
         if entry is None:
-            #print_to_user( 'PARSE ERROR: %s'%(string) )
-            self.string=string
+            #print_to_user( 'PARSE ERROR: %s'%(bib_string) )
+            self.bib_string=bib_string
         else:
             self.pub_type=entry.group('pub_type').strip().lower()
             if self.pub_type[0]=='@': self.pub_type=self.pub_type[1:]
@@ -128,7 +128,7 @@ class Bibtex(OrderedDict):
             return '@%s{%s,\n  %s\n}' % (self.pub_type.upper(), self.cite_key, ',\n  '.join('%s = {%s}'%(key,self[key])
                 for key in self.keys() if key not in self.ignore))
         else:
-            return self.string
+            return self.bib_string
 
     def mr_update(self, verbose=False, warn=True):
         """
@@ -182,10 +182,15 @@ class Bibtex(OrderedDict):
         if self.has_key('title') and len(self['title'])>0 and (not search.has_key('ipage') or preprint):
             search['ti']=self['title'].lower()
 
-        # now we pull up the mrlookup search engine
-        lookup = urllib.urlopen('http://www.ams.org/mrlookup', urllib.urlencode(search))
-        page=lookup.read()
-        lookup.close()   # close the url feed
+        # now we query mrlookup with our search string
+        try:
+            lookup = urllib.urlopen('http://www.ams.org/mrlookup', urllib.urlencode(search))
+            page=lookup.read()
+            lookup.close()   # close the url feed
+        except IOError:
+            print "%s: unable to connect to mrlookup" % (prog)
+            sys.exit(2)
+
 
         if self.only_one.search(page):
             # only found one matching entry in MathSciNet
@@ -220,6 +225,7 @@ bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incolle
                   'mastersthesis', 'misc', 'phdthesis', 'proceedings', 'techreport', 'unpublished']
 
 def main():
+    global prog
     prog=os.path.basename(sys.argv[0])
     usage='Usage: %s filename' % prog
     parser = OptionParser(usage=usage)
