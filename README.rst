@@ -6,7 +6,7 @@ This script is a command line tool for updating the entries in a BibTeX_ file
 using mrlookup_. By default bibupdate_ tries to find an updated entry unless
 unless it already has an *mrnumber* field. 
 
-**Usage** updata_bib <bibtex file>
+**Usage** bibupdate_ <bibtex file>
 
 **Options**::
 
@@ -27,7 +27,7 @@ do this because in my own files I found that these were not always reliable. In
 addition, preprints do not have such information (and the publication year of an
 article is rarely the same year that it appeared on a preprint archive).  For
 these reasons, bibupdate_ uses *fuzzy* matching on the list of authors and the
-title to when it tries to find an article using mrlookup_. 
+title to when it tries to find an article using mrlookup_.
 
 Although some care is taken to make sure that the new BibTeX_ entries does
 correspond to the original ones because of the fuzzy nature of the matching it
@@ -55,7 +55,7 @@ is not so obvious.
 
 * -a, --all                   check ALL BibTeX entries against mrlookup
 
-  By default bibupdate_ only checks each BibTeX entry with the mrloopup
+  By default bibupdate_ only checks each BibTeX entry with the mrlookup
   database if the entry does *not* have an **mrnumber** field. With this switch
   all entries are checked.
 
@@ -79,7 +79,7 @@ is not so obvious.
 
   Of the three missed entries, bibupdate_ thinks that the first two are
   preprints and that the final one should have been published. With the one
-  entry that bibupdate_ found it updaed only the publihser entry to include the
+  entry that bibupdate_ found it updated only the publisher entry to include the
   city of the publisher.
 
   In *quiet* mode you are just "warned" when changes are being made to an entry
