@@ -18,7 +18,19 @@ correct given the fuzzy nature of the search strings passed to mrlookup, and
 possible errors in the existing bibtex file, there are no guarantees so you
 are advised to check the updated file carefully!
 
-Andrew Mathas
+Installation
+============
+
+There are two easy routes.
+
+1. From the command line type::
+
+      pip install http://bitbucket.org/aparticle/update_bib/downloads/update_bib-1.0.tar.gz
+
+2. Download this repository, change directory into it and then run `pip` or `easy_install`::
+
+      pip setup.py install
+
 
 TODO
 ----
@@ -30,38 +42,9 @@ TODO
    it easier to diff the output. If this works then copy the original file to
    *.bak and put the updated file in its place.
 
-Installation
-============
+AUTHOR
+------
+Andrew Mathas
+2012
 
-There are two easy routes.
-
-* From the command line type::
-
-      pip install http://bitbucket.org/aparticle/update_bib/downloads/update_bib-1.0.tar.gz
-
-* Download this repository, change directory into it and then run `pip` or `easy_install`::
-
-      pip setup.py install
-
-* Quick summary
-* Version
-
-### How do I get set up? ###
-
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
-
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
-
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact
+Version 1.0
