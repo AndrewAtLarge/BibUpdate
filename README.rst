@@ -108,8 +108,9 @@ is not so obvious.
   - issn
 
   This list can be changed using the `-i` command line option:
-  > bibupdate -i "coden fjournal" file.bib  # ignore just coden and fjournal
-  > bibupdate -i "" file.bib                # do not ignore any fields
+
+  .. bibupdate -i "coden fjournal" file.bib  # ignore just coden and fjournal
+  .. bibupdate -i "" file.bib                # do not ignore any fields
 
 
 Installation
