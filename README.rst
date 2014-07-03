@@ -100,7 +100,8 @@ is not so obvious.
 
 -i IGNORE, --ignore=IGNORE  A string of BibTeX_ fields to ignore when printing
 
-  By default bibupdate_ removes the following fields from each BibTeX_ entry:
+  By default bibupdate_ removes the following fields from each BibTeX_ entry::
+
   - coden 
   - mrreviewer 
   - fjournal 
