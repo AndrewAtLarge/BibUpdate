@@ -1,9 +1,9 @@
-==========
-update_bib
-==========
+=========
+bibupdate
+=========
 
 This script is a command line tool for updating the entries in a BibTeX_ file
-using mrlookup_. By default update_bib_ tries to find an updated entry unless
+using mrlookup_. By default bibupdate_ tries to find an updated entry unless
 unless it already has an *mrnumber* field. BibTeX_ is commonly used by the
 LaTeX_ community to maintain publication databases.
 
@@ -22,11 +22,11 @@ file by querying mrlookup_ and getting the missing information from there. This
 is not completely routine because to search on mrlookup_ you need either the
 authors or the title of the article and both of these can have non-standard
 representations. If the article is already published then it is also possible to
-use the articles publication year and its page numbers but update_bib_ does NOT
+use the articles publication year and its page numbers but bibupdate_ does NOT
 do this because in my own files I found that these were not always reliable. In
 addition, preprints do not have such information (and the publication year of an
 article is rarely the same year that it appeared on a preprint archive).  For
-these reasons, update_bib_ uses *fuzzy* matching on the list of authors and the
+these reasons, bibupdate_ uses *fuzzy* matching on the list of authors and the
 title to when it tries to find an article using mrlookup_. 
 
 Although some care is taken to make sure that the new BibTeX_ entries does
@@ -44,7 +44,7 @@ links to journals, the arXiv_ and DOIs in my bibliographies of my papers. This
 script allowed me to painless add the missing urls and DOIs to my bibtex file.
 As a bonus the script corrected many minor errors in my database and it is now
 very success in updating the preprints in my database when they are published.
-As update_bib_ calls mrlookup_ it will only be useful if the papers in your
+As bibupdate_ calls mrlookup_ it will only be useful if the papers in your
 database are listed in MathSciNet_.
 
 Options and their defaults
@@ -59,7 +59,7 @@ There are two installation routes.
 
 1. From the command line type::
 
-      pip install http://bitbucket.org/aparticle/update_bib/downloads/update_bib-1.0.tar.gz
+      pip install http://bitbucket.org/aparticle/bibupdate/downloads/bibupdate-1.0.tar.gz
 
 2. Clone or download this repository, change directory into it and then 
    run *pip* or *easy_install*::
@@ -84,7 +84,7 @@ Links
 .. _LaTeX: http://en.wikipedia.org/wiki/LaTeX
 .. _MthSciNet: http://www.ams.org/mathscinet/
 .. _mrlookup: http://www.ams.org/mrlookup
-.. _update_bib: https://bitbucket.org/aparticle/update_bib
+.. _bibupdate: https://bitbucket.org/aparticle/bibupdate
 .. _arXiv: http://arxiv.org/
 
 AUTHOR
