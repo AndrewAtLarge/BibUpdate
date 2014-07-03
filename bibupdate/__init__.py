@@ -81,7 +81,7 @@ def bad_match(one,two):
 class Bibtex(OrderedDict):
     r"""
     The bibtex class holds all of the data for one bibtex entry. As the bibtex
-    file is a text file to extract the data from it we use a collection of
+    file is a flat text file, to extract the data from it we use a collection of
     regular expressions which pull out the data key by key.
 
     The class is called with a string which is known to hold a bibtex entry and
@@ -89,13 +89,14 @@ class Bibtex(OrderedDict):
     has an mr_update() attribute which, when called, will attempt to find this
     paper in MathSciNet using mrlookup. If it is successful then it will
     overwrite all of the existing bibtex field, except for the cite key, with
-    the entries it retrieves from MathSciNet.
+    the entries it retrieves from MathSciNet (any entries not in MathSciNet will
+    remain).
 
     Most of he hard work is done by a cunning use of regular expressions to
-    extract the data from the bibtex file and from mrlookup...maybe should be
-    using pyquery or beautiful soup for the latter!?
+    extract the data from the bibtex file and from mrlookup...perhaps we should 
+    be using pyquery or beautiful soup for the latter, but this regular
+    expressions are certainly effective.
     """
-
     # regular expression to extract a bibtex entry from a string
     parse_bibtex_entry=re.compile(r"(?P<pub_type>@\w*)\s*\{\s*(?P<cite_key>\S*)\s*,\s*?(?P<keys_and_vals>.*\})[,\s]*\}", re.MULTILINE|re.DOTALL)
 
@@ -109,8 +110,8 @@ class Bibtex(OrderedDict):
     # We match either "First Last" or "Last, First"
     author=re.compile(r'(([A-Z][A-Za-z\.]* )*(?P<au>\w*))|(?P<Au>\w*,)',re.DOTALL)
 
-    # only_one will find a match if the mrlookup page contains a single match
-    only_one=re.compile('Retrieved all documents')
+    # only_match_one will find a match if the mrlookup page contains a single match
+    only_one_match=re.compile('Retrieved all documents')
 
     # regular expression to find the bibtex entry on the mrlookup page
     mrlookup_page=re.compile(r"<pre>.*(?P<mr>@.*\})<\/pre>", re.DOTALL)
@@ -165,8 +166,9 @@ class Bibtex(OrderedDict):
 
     def mr_update(self):
         """
-        Uses mrlookup to search for a more up-to-date version of this record. If we find
-        one then we update ourself and overwrite all fields with those from mrlookup.
+        Uses mrlookup to search for a more up-to-date version of this entry. If
+        we find one then we update ourself and overwrite all fields with those
+        from mrlookup (and keep any other fields).
 
         To search with mrlookup we look for papers published by the first author in the
         given year with the right page numbers.
@@ -190,7 +192,7 @@ class Bibtex(OrderedDict):
                 search['fpage']=pages.group('zpage')  # last page
             elif self['pages'].isdigit():
                 search['ipage']=self['pages']  # first page
-                search['fpage']=self['pages']  # last page
+                #search['fpage']=self['pages']  # last page
 
         # the year is reliable only if we also have page numbers
         if self.has_key('year') and (self.pub_type=='book' or search.has_key('ipage')):
@@ -225,7 +227,7 @@ class Bibtex(OrderedDict):
             print "%s: unable to connect to mrlookup" % (options.prog)
             sys.exit(2)
 
-        if self.only_one.search(page):
+        if self.only_one_match.search(page):
             # only found one matching entry in MathSciNet
             mr_entry = self.mrlookup_page.search(page)
             if not mr_entry is None:
@@ -234,7 +236,11 @@ class Bibtex(OrderedDict):
                 differences=[key for key in new_self if key not in options.ignored_fields and self[key]<>new_self[key]]
                 if differences!=[] and any(self[key]!='' for k in differences):
                     if options.warn:
-                        print_to_user( 'Found updated entry for %s' % self.cite_key )
+                        print_to_user( '-Found updated entry for %s' % self.cite_key )
+                        # warn reader of bad title match
+                        if bad_match(self['title'],new_self['title']):
+                            print_to_user('*Bad title match %s!\n  %s  <-->  %s' % (self.cite_key, self['title'], new_self['title']) )
+
                     if options.verbose:
                         print '\n'.join('  %s: %s\n %s-> %s'%(key,self[key], ' '*len(key),
                                         new_self[key]) for key in differences if self[key]!='')

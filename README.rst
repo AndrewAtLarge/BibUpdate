@@ -4,21 +4,22 @@ bibupdate
 
 This script is a command line tool for updating the entries in a BibTeX_ file
 using mrlookup_. By default bibupdate_ tries to find an updated entry for each
-paper unless the entry already has an *mrnumber* field (so you can disable
-future checking of an entry by giving it an empty *mrnumber* field).
+paper unless the entry already has an *mrnumber* field (you can disable future
+checking of an entry by giving it an empty *mrnumber* field).
 
 **Usage** bibupdate_ <file.bib>
 
 **Options**::
 
-  -a, --all                   check ALL BibTeX entries against mrlookup
+  -a, --all                   check ALL BibTeX_ entries against mrlookup
   -h, --help                  show this help message and exit
-  -n, --no_warnings           do not print warnings when replacing BibTeX_ entries
+  -f, --font                  do not replace fonts \germ and \scr
   -i IGNORE, --ignore=IGNORE  A string of BibTeX_ fields to ignore when printing
+  -n, --no_warnings           do not print warnings when replacing BibTeX_ entries
   -q, --quiet                 Do not print a list of changes (default on)
   -v, --version               Print version and exit
 
-\bibupdate_ does not change your origin database file and, instead, it creates a
+bibupdate_ does not change your originl database file. Instead, it creates a
 new file with the name *updated_file.bib*, if your original file was *file.bib*.
 As described below, you should check the new file for errors.
 
@@ -27,30 +28,36 @@ file by querying mrlookup_ and getting the missing information from there. This
 is not completely routine because to search on mrlookup_ you need either the
 authors or the title of the article and both of these can have non-standard
 representations. If the article is already published then it is also possible to
-use the articles publication year and its page numbers but bibupdate_ does NOT
-do this because in my own files I found that these were not always reliable. In
-addition, preprints do not have such information (and the publication year of an
-article is rarely the same year that it appeared on a preprint archive).  For
-these reasons, bibupdate_ uses *fuzzy* matching on the list of authors and the
-title to when it tries to find an article using mrlookup_.
+use the publication year and its page numbers. To search on mrlookup_ we::
+
+- use the authors (can be problematic with names with von etc)
+- use the page numbers, if they exist
+- use the year only if there are no page numbers and this is NOT a preprint
+- use the title if there are no page numbers (or this is a book)
+
+If this yields a unique match from mrlookup_ then bibupdate_ replaces all of the
+current entries with those from mrlookup_ (any entries not known by mrlookup_
+are retained), and the changes to the entries are printed in verbose mode.
+If the title of the retrieved paper does not (fuzzily) match that of the
+original article then a warning is printed.
 
 Although some care is taken to make sure that the new BibTeX_ entries correspond
-to the paper that the original entry referred to there is always a chance the
-new entry corresponds to an entirely different paper because fuzzy matching is
-used to make the comparisons. In my experience this happens only rarely, and
-mostly with unpublished manuscripts. In any case, *you are strongly advised to
-check the updated file BibTeX_ file carefully for errors!*
+to the same paper that the original entry referred to there is always a chance
+the new entry corresponds to an entirely different paper because. In my
+experience this happens only rarely, and mostly with unpublished manuscripts. In
+any case, before you delete you original BibTeX_ file *you are strongly advised
+to check the updated file BibTeX_ file carefully for errors!*
 
 To help with comparing the updated entries in *verbose* mode, the default, the
-program prints a detailed list of the changes that are being made to  existing
-bibtex entries (the new fields added to an entry are not printed). Comparing the
+program prints a detailed list of the changes that are being made to existing
+BibTeX_ entries (the new fields added to an entry are not printed). Comparing the
 old and new versions of your database with programs like *diff* and *tkdiff* is
 highly recommended.
 
 I wrote this class because with the advent of hyperref_ I wanted to be able to
 add links to journals, the arXiv_ and DOIs in the bibliographies of my papers.
-This script allowed me to add the missing urls and DOI fields to my bibtex
-database.  As a bonus the script corrected many minor errors that I had entered
+This script allowed me to add the missing urls and DOI fields to my BibTeX_
+database. As a bonus the script corrected many minor errors that I had entered
 over the years (for example, incorrect page numbers and years). The program is
 still useful because it is quite successful in updating the preprint entries in
 my database when the papers are published.
@@ -64,17 +71,23 @@ Options and their defaults
 Most of the options are described above. Here is a little extra detail when it
 is not so obvious.
 
--a, --all                   check ALL BibTeX entries against mrlookup
+-a, --all                   check ALL BibTeX_ entries against mrlookup
 
-  By default bibupdate_ only checks each BibTeX entry with the mrlookup
+  By default bibupdate_ only checks each BibTeX_ entry with the mrlookup
   database if the entry does *not* have an **mrnumber** field. With this switch
   all entries are checked.
 
--n, --no_warnings           do not print warnings when replacing BibTeX_ entries
+-f, --font                  do not replace fonts \germ and \scr
+
+  The BibTeX_ entries generated by mrlookup_ use \germ and \scr for the mathfrak 
+  and and mathscr fnonts. By default these two fonts specfications are changed 
+  to \mathfrak and \mathscr, respectively. The *-f* option disables this.
+
 -q, --quiet                 Do not print a list of changes (default on)
+-n, --no_warnings           do not print warnings when replacing BibTeX_ entries
 
   There are two levels of verbosity in how bibupdate_ describes the changes that
-  it is making. By default all additions to the bibtex entry are printed (to stdout).
+  it is making. By default all additions to the BibTeX_ entry are printed (to stdout).
   In addition, bibupdate_ will tell you when it *is not* able to find the paper
   on mrlookup_ (either because there are no matches or because there are too
   many). If it is not able to find the paper in the mrlookup_ database and
@@ -82,7 +95,7 @@ is not so obvious.
   missing entry with an exclamation mark. Here is some sample output::
 
      Missed Webster:CanonicalBasesHigherRep: Canonical bases and higher representatio
-    Found updated entry for Weyl
+    -Found updated entry for Weyl
       publisher: Princeton University Press
               -> Princeton University Press, Princeton, NJ
      Missed Williamson:JamesLusztig: Schubert calculus and torsion
@@ -95,7 +108,7 @@ is not so obvious.
 
   In *quiet* mode you are just "warned" when changes are being made to an entry
   That is, when papers are found (with changes) or when they are missed and
-  bibupdate_ thinks that they are not preprints.  If the warnings are turned off
+  bibupdate_ thinks that they are not preprints. If the warnings are turned off
   then you are on your own.
 
 -i IGNORE, --ignore=IGNORE  A string of BibTeX_ fields to ignore when printing
@@ -128,18 +141,17 @@ There are two installation routes.
       pip setup.py install
 
 
-ToDo
-----
-* Find the best match when mrlookup_ returns multiple entries!
-* Add an rc file to override the defaults...
+To do
+-----
+* Find the best match when mrlookup_ returns multiple entries...
 
-History
+Context
 -------
 BibTeX_ is used by the LaTeX_ community to maintain publication databases.
 
 Links
 -----
-.. _BibTeX: http://www.BibTeX_.org/
+.. _BibTeX: http://www.bibtex.org/
 .. _hyperref: http://www.ctan.org/pkg/hyperref
 .. _LaTeX: http://en.wikipedia.org/wiki/LaTeX
 .. _MthSciNet: http://www.ams.org/mathscinet/
