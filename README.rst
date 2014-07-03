@@ -1,9 +1,19 @@
-README
-======
+update_bib
+==========
 
-This README would normally document whatever steps are necessary to get your application up and running.
+This is a command line for updating the entries in a 
+[BibTeX](http://www.bibtex.org/) file using [mrlookup](http://www.ams.org/mrlookup).
 
-Usage: updata_bib <bibtex file>
+*Usage* updata_bib <bibtex file>
+
+*Options*::
+
+  -h, --help            show this help message and exit
+  -n, --no_warnings     do not print warnings when replacing bibtex entries
+  -i IGNORE, --ignore=IGNORE
+                        bibtex fields to ignore
+  -k, --keep            keep all fields (ignore none)
+  -v, --verbose         
 
 This script tries to use mrlookup to update all of the entries in a bibtex
 file except for the cite key which remains unchanged. Rather than
