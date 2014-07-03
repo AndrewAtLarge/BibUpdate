@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='bibupdate',
-      version='1.1beta',
+      version='1.1',
       description='A script for updating the entries of a bibtex file using mrlookup',
       keywords = 'bibtex, mrlookup, MathSciNet, latex',
 

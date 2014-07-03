@@ -15,7 +15,8 @@ LaTeX_ community to maintain publication databases.
   -h, --help                  show this help message and exit
   -n, --no_warnings           do not print warnings when replacing BibTeX_ entries
   -i IGNORE, --ignore=IGNORE  A string of BibTeX_ fields to ignore when printing
-  -v, --verbose
+  -q, --quiet                 Do not print a list of changes (default on)
+  -v, --version               Print version and exit
 
 This script attempts to add missing fields to the papers in a BibTeX_ database
 file by querying mrlookup_ and getting the missing information from there. This
@@ -70,11 +71,8 @@ There are two installation routes.
 TODO
 ----
 
-* find the best match when mrlookup_ returns multiple entries!
-* reconfigure so that the BibTeX_ entries are printed in the same order to make
-  it easier to diff the output. If this works then copy the original file to
-  *.bak and put the updated file in its place.
-* Add a (yaml?) rc file to override the defaults...
+* Find the best match when mrlookup_ returns multiple entries!
+* Add an rc file to override the defaults...
 
 Links
 -----
