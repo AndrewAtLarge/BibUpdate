@@ -53,7 +53,7 @@ This script allowed me to add the missing urls and DOI fields to my bibtex
 database.  As a bonus the script corrected many minor errors that I had entered
 over the years (for example, incorrect page numbers and years). The program is
 still useful because it is quite successful in updating the preprint entries in
-my database when the papers are published. 
+my database when the papers are published.
 
 As bibupdate_ calls mrlookup_ this program will only be useful if you have
 papers in your database that are listed in MathSciNet_.
@@ -86,7 +86,7 @@ is not so obvious.
       publisher: Princeton University Press
               -> Princeton University Press, Princeton, NJ
      Missed Williamson:JamesLusztig: Schubert calculus and torsion
-    !Missed QSAII: On Quantitative Substitutional Analysis 
+    !Missed QSAII: On Quantitative Substitutional Analysis
 
   Of the three missed entries, bibupdate_ thinks that the first two are
   preprints and that the final one should have been published. With the one
@@ -102,12 +102,12 @@ is not so obvious.
 
   By default bibupdate_ removes the following fields from each BibTeX_ entry::
 
-  - coden 
-  - mrreviewer 
-  - fjournal 
+  - coden
+  - mrreviewer
+  - fjournal
   - issn
 
-  This list can be changed using the `-i` command line option:
+  This list can be changed using the `-i` command line option::
 
   .. bibupdate -i "coden fjournal" file.bib  # ignore just coden and fjournal
   .. bibupdate -i "" file.bib                # do not ignore any fields
@@ -122,7 +122,7 @@ There are two installation routes.
 
       pip install http://bitbucket.org/aparticle/bibupdate/downloads/bibupdate-1.0.tar.gz
 
-2. Clone or download this repository, change directory into it and then 
+2. Clone or download this repository, change directory into it and then
    run *pip* or *easy_install*::
 
       pip setup.py install
