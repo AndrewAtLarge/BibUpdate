@@ -19,7 +19,7 @@ future checking of an entry by giving it an empty *mrnumber* field).
   -v, --version               Print version and exit
 
 \bibupdate_ does not change your origin database file and, instead, it creates a
-new file with the name `updated_file.bib`, if your original file was `file.bib`.
+new file with the name *updated_file.bib*, if your original file was *file.bib*.
 As described below, you should check the new file for errors.
 
 This script attempts to add missing fields to the papers in a BibTeX_ database
@@ -107,7 +107,7 @@ is not so obvious.
   - fjournal
   - issn
 
-  This list can be changed using the `-i` command line option::
+  This list can be changed using the -i command line option::
 
   .. bibupdate -i "coden fjournal" file.bib  # ignore just coden and fjournal
   .. bibupdate -i "" file.bib                # do not ignore any fields
