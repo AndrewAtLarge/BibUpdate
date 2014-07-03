@@ -27,10 +27,10 @@ r"""
 
 
 TODO:
-    - add a flag so that the script checks all of the bibtex entries using mr-reference or mrlookup.
     - find the best match when mrlookup returns multiple entries!
-    - work out and add dependencies
     - copy the original file to *.bak and put the updated file in its place.
+    - add a feature to CHECK the current entries for correctness
+    - better output to summarise changes
 
 """
 
@@ -38,6 +38,10 @@ import urllib, re, sys, os
 from collections import OrderedDict
 from fuzzywuzzy import fuzz
 from optparse import OptionParser
+
+# possible types of entries in a bibtex database
+bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incollection', 'inproceedings', 'manual',
+                  'mastersthesis', 'misc', 'phdthesis', 'proceedings', 'techreport', 'unpublished']
 
 def print_to_user(comment):
     r"""
@@ -123,11 +127,21 @@ class Bibtex(OrderedDict):
     def str(self):
         if hasattr(self,'pub_type'):
             return '@%s{%s,\n  %s\n}' % (self.pub_type.upper(), self.cite_key, ',\n  '.join('%s = {%s}'%(key,self[key])
-                for key in self.keys() if key not in ignored_fields))
+                for key in self.keys() if key not in options.ignored_fields))
         else:
             return self.bib_string
 
-    def mr_update(self, verbose=False, warn=True):
+    def __getitem__(self, key, default=''):
+        """
+        We override `__getitem__` so that `self[key]` returns `default` if the `self[key]`
+        does not exist.
+        """
+        try:
+            return OrderedDict.__getitem__(self, key)
+        except KeyError:
+            return default
+
+    def mr_update(self):
         """
         Uses mrlookup to search for a more up-to-date version of this record. If we find
         one then we update ourself and overwrite all fields with those from mrlookup.
@@ -139,7 +153,8 @@ class Bibtex(OrderedDict):
         """
 
         # only check mathscinet for books or articles for which we don't already have it
-        if self.has_key('mrnumber') or self.pub_type not in ['book','article','inproceedings','incollection']:
+        if not options.check_all and (self.has_key('mrnumber')
+           or self.pub_type not in ['book','article','inproceedings','incollection']):
             return
 
         search={'bibtex':'checked'}   # a dictionary that will contain the parameters for the mrlookup search
@@ -185,72 +200,58 @@ class Bibtex(OrderedDict):
             page=lookup.read()
             lookup.close()   # close the url feed
         except IOError:
-            print "%s: unable to connect to mrlookup" % (prog)
+            print "%s: unable to connect to mrlookup" % (options.prog)
             sys.exit(2)
 
         if self.only_one.search(page):
             # only found one matching entry in MathSciNet
             mr_entry = self.mrlookup_page.search(page)
             if not mr_entry is None:
-                print_to_user( '!FOUND MR entry for %s' % self.cite_key )
                 # We extract the updated entry and use it to update all fields
                 new_self=Bibtex(mr_entry.group('mr'))
-                if new_self.pub_type!=self.pub_type:
-                    print_to_user('*Publication type mismatch for %s!' % self.cite_key)
-                elif preprint and int(new_self['year'])<int(self['year']):
-                    print_to_user('*Preprint year too early for %s!' % self.cite_key)
-                elif bad_match(self['title'],new_self['title']):
-                    print_to_user('*Bad title match %s!\n  %s  <-->  %s' % (self.cite_key, self['title'], new_self['title']) )
-                else:
-                    if warn:
-                        try:
-                            print 'Replacing (preprint=%s):\n   %s %s %s\n-->%s %s %s\n' % (preprint,
-                                self.cite_key, self['title'], self.year, new_self.cite_key, new_self['title'], new_self.year)
-                        except AttributeError:
-                            print 'Replacing %s%s' % ("(preprint) " if preprint else "", self)
+                differences=[key for key in new_self if key not in options.ignored_fields and self[key]<>new_self[key]]
+                if differences!=[]:
+                    if options.warn:
+                        print_to_user( '!Found updated entry for %s' % self.cite_key )
+                    if options.verbose:
+                        print '\n'.join('  %s: %s\n %s-> %s'%(key,self[key], ' '*len(key),
+                                        new_self[key]) for key in differences if self[key]!='')
 
-                    for key in new_self:
+                    for key in differences:
                         self[key]=new_self[key]
         else:
-            if verbose or not preprint:
+            if options.verbose or not preprint:
                 print_to_user('%sMissed %s: %s'%(' ' if preprint else '!',
                        self.cite_key, self['title'][:40] if self.has_key('title') else '???'))
 
-# possible types of entries in a bibtex database
-bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incollection', 'inproceedings', 'manual',
-                  'mastersthesis', 'misc', 'phdthesis', 'proceedings', 'techreport', 'unpublished']
-
 def main():
-    global prog, ignored_fields
+    global options
 
     # fields from mathscinet that we want to ignore
-    ignore=['coden','mrreviewer','fjournal','issn']
     prog=os.path.basename(sys.argv[0])
     usage='Usage: %s filename' % prog
     parser = OptionParser(usage=usage)
-    parser.add_option('-n','--no_warnings',action='store_true', dest='warn',
-                      help='do not print warnings when replacing bibtex entries')
+    parser.add_option('-a','--all',action='store_true',dest='check_all',
+                      help='check ALL BibTeX entries against mrlookup')
     parser.add_option('-i','--ignore',dest='ignore',
                       default='coden mrreviewer fjournal issn',
-                      help='bibtex fields to ignore')
-    parser.add_option('-k','--keep',dest='keep',action='store_true',
-                      help='keep all fields (ignore none)')
+                      help='a string of bibtex fields to ignore when printing')
+    parser.add_option('-n','--no_warnings',action='store_true', dest='warn',
+                      help='do not print warnings when replacing bibtex entries')
     parser.add_option('-v','--verbose',action='store_true', dest='verbose')
-    parser.set_defaults(warn=True,verbose=False,keep=False)
+    parser.set_defaults(warn=True,verbose=False,check_all=False)
     (options, args) = parser.parse_args()
     # if no filename then exit
-    if len(args)!=1 or (options.keep and not options.ignore in ['','coden mrreviewer fjournal issn']):
+    if len(args)!=1:
         print usage
         sys.exit(1)
     # parse the options
-    verbose=options.verbose
-    warn=options.warn
-    if options.keep or options.ignore=='':
-        ignored_fields=[]
-    else:
-        ignored_fields=options.ignore.split(' ')
+    options.prog=prog
+    options.ignored_fields=[field for field in options.ignore.split(' ') if field!='']
+    if options.verbose:
+        options.warn=True
 
-    # opening existing bibfile
+    # open the existing BibTeX file
     try:
         bibfile=open(args[0],'r')
         papers=bibfile.read()
@@ -259,21 +260,22 @@ def main():
         print "%s: unable to open bibtex file %s" % (prog, args[0])
         sys.exit(2)
 
-    # regular expression for extracting papers from bibtex file
-    bibtex_entry=re.compile('(@[^@]*})\s*',re.DOTALL)
-
+    # open the replacement BibTeX file
     try:
         newbibfile=open('new'+args[0],'w')
     except IOError,e:
         print "%s: unable to open new bibtex file new%s" % (prog, args[0])
         sys.exit(2)
 
+    # define a regular expression for extracting papers from BibTeX file
+    bibtex_entry=re.compile('(@[^@]*})\s*',re.DOTALL)
+
     for bibentry in bibtex_entry.finditer(papers):
         if not bibentry is None:
             bt=Bibtex(bibentry.group())
             if hasattr(bt, 'pub_type'):
                 if bt.pub_type in bibtex_pub_types:
-                    bt.mr_update(verbose, warn)
+                    bt.mr_update()
                 else:
                     print_to_user( 'Unknown pub_type %s for %s'%(bt.pub_type, bt_cite_key) )
 
