@@ -120,7 +120,7 @@ There are two installation routes.
 
 1. From the command line type::
 
-      pip install http://bitbucket.org/aparticle/bibupdate/downloads/bibupdate-1.0.tar.gz
+      pip install http://bitbucket.org/AndrewsBucket/bibupdate/downloads/bibupdate-1.1.tar.gz
 
 2. Clone or download this repository, change directory into it and then
    run *pip* or *easy_install*::
