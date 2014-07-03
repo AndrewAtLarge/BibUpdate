@@ -20,7 +20,8 @@ are advised to check the updated file carefully!
 
 Andrew Mathas
 
-TODO::
+TODO
+----
 
  * add a flag so that the script checks all of the bibtex entries using mr-reference or mrlookup.
  * find the best match when mrlookup returns multiple entries! 
@@ -32,16 +33,18 @@ TODO::
 Installation
 ============
 
-There are two easy routes::
+There are two easy routes.
 
-* From the command line type:
-  >    pip install http://bitbucket.org/aparticle/update_bib/downloads/update_bib-1.0.tar.gz
-* Download this repository, change directory into it and then run `pip` or `easy_install`:
-  > pip setup.py install
+* From the command line type::
+
+      pip install http://bitbucket.org/aparticle/update_bib/downloads/update_bib-1.0.tar.gz
+
+* Download this repository, change directory into it and then run `pip` or `easy_install`::
+
+      pip setup.py install
 
 * Quick summary
 * Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
 ### How do I get set up? ###
 
