@@ -43,6 +43,24 @@ from optparse import OptionParser
 bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incollection', 'inproceedings', 'manual',
                   'mastersthesis', 'misc', 'phdthesis', 'proceedings', 'techreport', 'unpublished']
 
+def font_replace(string):
+    r"""
+    Return a new version of `string` with various fonts commands replaced with 
+    their more standard LaTeX variants.
+
+    Currently::
+
+        - \scr --> \mathscr
+        - \germ -> \mathfrak
+
+    This is not perfect because `\germ O` should be replaced with `\mathfrak{O}`
+    and `\germ g\germ l` should be replaced with `\mathfrak{gl}`.
+    """
+    fonts={r'\scr':r'\mathcal', r'\germ': r'\mathfrak'}
+    for word in fonts:
+        string=string.replace(word, fonts[word])
+    return string
+
 def print_to_user(comment):
     r"""
     Print the string `comment' to stdout so that the user knows what is happening.
@@ -122,7 +140,11 @@ class Bibtex(OrderedDict):
                 val=val.strip(', ')
                 if val[0] =='{': val=val[1:]
                 if val[-1]=='}': val=val[:-1]
-                self[key.lower()]=' '.join(val.strip(',').split())
+                val=' '.join(val.strip(',').split())
+                if options.replace_fonts:
+                    self[key.lower()]=font_replace(val)
+                else:
+                    self[key.lower()]=val
 
     def str(self):
         if hasattr(self,'pub_type'):
@@ -148,8 +170,6 @@ class Bibtex(OrderedDict):
 
         To search with mrlookup we look for papers published by the first author in the
         given year with the right page numbers.
-
-        TO DO: think of something sensible to do with preprints...
         """
 
         # only check mathscinet for books or articles for which we don't already have it
@@ -159,7 +179,9 @@ class Bibtex(OrderedDict):
 
         search={'bibtex':'checked'}   # a dictionary that will contain the parameters for the mrlookup search
 
-        preprint=self.has_key('pages') and self['pages'].lower() in ['preprint', 'to appear', 'in preparation']
+        # try to guess whether this entry corresponds to a preprint
+        preprint=( (self.has_key('pages') and self['pages'].lower() in ['preprint', 'to appear', 'in preparation']) 
+                  or not (self.has_key('pages') and self.has_key('journal')) )
 
         if self.has_key('pages') and not preprint:
             pages=self.page_nums.search(self['pages'])
@@ -210,7 +232,7 @@ class Bibtex(OrderedDict):
                 # We extract the updated entry and use it to update all fields
                 new_self=Bibtex(mr_entry.group('mr'))
                 differences=[key for key in new_self if key not in options.ignored_fields and self[key]<>new_self[key]]
-                if differences!=[]:
+                if differences!=[] and any(self[key]!='' for k in differences):
                     if options.warn:
                         print_to_user( '!Found updated entry for %s' % self.cite_key )
                     if options.verbose:
@@ -233,13 +255,19 @@ def main():
     parser = OptionParser(usage=usage)
     parser.add_option('-a','--all',action='store_true',dest='check_all',
                       help='check ALL BibTeX entries against mrlookup')
+    parser.add_option('-f','--font',dest='replace_fonts',action='store_false',
+                      help='do not replace fonts \germ and \scr')
     parser.add_option('-i','--ignore',dest='ignore',
                       default='coden mrreviewer fjournal issn',
                       help='a string of bibtex fields to ignore when printing')
     parser.add_option('-n','--no_warnings',action='store_true', dest='warn',
                       help='do not print warnings when replacing bibtex entries')
-    parser.add_option('-v','--verbose',action='store_true', dest='verbose')
-    parser.set_defaults(warn=True,verbose=False,check_all=False)
+    parser.add_option('-q','--quiet',action='store_false', dest='verbose')
+    parser.set_defaults(check_all=False,
+                        replace_fonts=True,
+                        verbose=True,
+                        warn=True,
+                       )
     (options, args) = parser.parse_args()
     # if no filename then exit
     if len(args)!=1:
@@ -247,9 +275,7 @@ def main():
         sys.exit(1)
     # parse the options
     options.prog=prog
-    options.ignored_fields=[field for field in options.ignore.split(' ') if field!='']
-    if options.verbose:
-        options.warn=True
+    options.ignored_fields=[field for field in options.ignore.split()]
 
     # open the existing BibTeX file
     try:
