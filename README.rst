@@ -53,14 +53,14 @@ Options and their defaults
 Most of the options are described above. Here is a little extra detail when it
 is not so obvious.
 
-* -a, --all                   check ALL BibTeX entries against mrlookup
+-a, --all                   check ALL BibTeX entries against mrlookup
 
   By default bibupdate_ only checks each BibTeX entry with the mrlookup
   database if the entry does *not* have an **mrnumber** field. With this switch
   all entries are checked.
 
-* -n, --no_warnings           do not print warnings when replacing BibTeX_ entries
-* -q, --quiet                 Do not print a list of changes (default on)
+-n, --no_warnings           do not print warnings when replacing BibTeX_ entries
+-q, --quiet                 Do not print a list of changes (default on)
 
   There are two levels of verbosity in how bibupdate_ describes the changes that
   it is making. By default all additions to the bibtex entry are printed (to stdout).
@@ -87,7 +87,7 @@ is not so obvious.
   bibupdate_ thinks that they are not preprints.  If the warnings are turned off
   then you are on your own.
 
-* -i IGNORE, --ignore=IGNORE  A string of BibTeX_ fields to ignore when printing
+-i IGNORE, --ignore=IGNORE  A string of BibTeX_ fields to ignore when printing
 
   By default bibupdate_ removes the following fields from each BibTeX_ entry:
   - coden 
