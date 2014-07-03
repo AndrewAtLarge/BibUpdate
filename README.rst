@@ -1,8 +1,7 @@
-# README #
+README
+======
 
 This README would normally document whatever steps are necessary to get your application up and running.
-
-### What is this repository for? ###
 
 Usage: updata_bib <bibtex file>
 
@@ -21,7 +20,8 @@ are advised to check the updated file carefully!
 
 Andrew Mathas
 
-TODO:
+TODO::
+
  * add a flag so that the script checks all of the bibtex entries using mr-reference or mrlookup.
  * find the best match when mrlookup returns multiple entries! 
  * add dependencies
@@ -29,9 +29,11 @@ TODO:
    it easier to diff the output. If this works then copy the original file to
    *.bak and put the updated file in its place.
 
-### Installation ###
+Installation
+============
 
-There are two easy routes:
+There are two easy routes::
+
 * From the command line type:
   >    pip install http://bitbucket.org/aparticle/update_bib/downloads/update_bib-1.0.tar.gz
 * Download this repository, change directory into it and then run `pip` or `easy_install`:
