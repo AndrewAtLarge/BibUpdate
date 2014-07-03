@@ -3,10 +3,11 @@ bibupdate
 =========
 
 This script is a command line tool for updating the entries in a BibTeX_ file
-using mrlookup_. By default bibupdate_ tries to find an updated entry unless
-unless it already has an *mrnumber* field. 
+using mrlookup_. By default bibupdate_ tries to find an updated entry for each
+paper unless the entry already has an *mrnumber* field (so you can disable
+future checking of an entry by giving it an empty *mrnumber* field).
 
-**Usage** bibupdate_ <bibtex file>
+**Usage** bibupdate_ <file.bib>
 
 **Options**::
 
@@ -16,6 +17,10 @@ unless it already has an *mrnumber* field.
   -i IGNORE, --ignore=IGNORE  A string of BibTeX_ fields to ignore when printing
   -q, --quiet                 Do not print a list of changes (default on)
   -v, --version               Print version and exit
+
+\bibupdate_ does not change your origin database file and, instead, it creates a
+new file with the name `updated_file.bib`, if your original file was `file.bib`.
+As described below, you should check the new file for errors.
 
 This script attempts to add missing fields to the papers in a BibTeX_ database
 file by querying mrlookup_ and getting the missing information from there. This
@@ -29,23 +34,29 @@ article is rarely the same year that it appeared on a preprint archive).  For
 these reasons, bibupdate_ uses *fuzzy* matching on the list of authors and the
 title to when it tries to find an article using mrlookup_.
 
-Although some care is taken to make sure that the new BibTeX_ entries does
-correspond to the original ones because of the fuzzy nature of the matching it
-possible that updated entries can be for completely different papers. *For this
-reason you are advised to check the updated file BibTeX_ file carefully!*
+Although some care is taken to make sure that the new BibTeX_ entries correspond
+to the paper that the original entry referred to there is always a chance the
+new entry corresponds to an entirely different paper because fuzzy matching is
+used to make the comparisons. In my experience this happens only rarely, and
+mostly with unpublished manuscripts. In any case, *you are strongly advised to
+check the updated file BibTeX_ file carefully for errors!*
 
-To help with comparing the updated entries in *verbose* mode the program prints
-a detailed list of the changes to existing bibtex entries (new entries are not
-printed). Comparing the old and new versions of your database with programs like
-*diff* and *tkdiff* is highly recommended.
+To help with comparing the updated entries in *verbose* mode, the default, the
+program prints a detailed list of the changes that are being made to  existing
+bibtex entries (the new fields added to an entry are not printed). Comparing the
+old and new versions of your database with programs like *diff* and *tkdiff* is
+highly recommended.
 
 I wrote this class because with the advent of hyperref_ I wanted to be able to
-links to journals, the arXiv_ and DOIs in my bibliographies of my papers. This
-script allowed me to painless add the missing urls and DOIs to my bibtex file.
-As a bonus the script corrected many minor errors in my database and it is now
-very success in updating the preprints in my database when they are published.
-As bibupdate_ calls mrlookup_ it will only be useful if the papers in your
-database are listed in MathSciNet_.
+add links to journals, the arXiv_ and DOIs in the bibliographies of my papers.
+This script allowed me to add the missing urls and DOI fields to my bibtex
+database.  As a bonus the script corrected many minor errors that I had entered
+over the years (for example, incorrect page numbers and years). The program is
+still useful because it is quite successful in updating the preprint entries in
+my database when the papers are published. 
+
+As bibupdate_ calls mrlookup_ this program will only be useful if you have
+papers in your database that are listed in MathSciNet_.
 
 Options and their defaults
 --------------------------
