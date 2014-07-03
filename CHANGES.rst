@@ -3,4 +3,4 @@
 * better reporting of differences between the old and updated bibtex entries
 * improved documentation 
 
-**v1.0** July 2012 -- Initial version.
+**v1.0** July 2012 -- initial version.

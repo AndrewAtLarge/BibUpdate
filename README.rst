@@ -88,6 +88,3 @@ Links
 AUTHOR
 ------
 Andrew Mathas
-2012
-
-Version 1.0
