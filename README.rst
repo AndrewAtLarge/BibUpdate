@@ -4,8 +4,7 @@ bibupdate
 
 This script is a command line tool for updating the entries in a BibTeX_ file
 using mrlookup_. By default bibupdate_ tries to find an updated entry unless
-unless it already has an *mrnumber* field. BibTeX_ is commonly used by the
-LaTeX_ community to maintain publication databases.
+unless it already has an *mrnumber* field. 
 
 **Usage** updata_bib <bibtex file>
 
@@ -68,15 +67,17 @@ There are two installation routes.
       pip setup.py install
 
 
-TODO
+ToDo
 ----
-
 * Find the best match when mrlookup_ returns multiple entries!
 * Add an rc file to override the defaults...
 
+History
+-------
+BibTeX_ is used by the LaTeX_ community to maintain publication databases.
+
 Links
 -----
-
 .. _BibTeX: http://www.BibTeX_.org/
 .. _hyperref: http://www.ctan.org/pkg/hyperref
 .. _LaTeX: http://en.wikipedia.org/wiki/LaTeX
