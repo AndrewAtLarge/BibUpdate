@@ -29,6 +29,13 @@ TODO:
    it easier to diff the output. If this works then copy the original file to
    *.bak and put the updated file in its place.
 
+### Installation ###
+
+There are two easy routes:
+* From the command line type:
+  >    pip install http://bitbucket.org/aparticle/update_bib/downloads/update_bib-1.0.tar.gz
+* Download this repository, change directory into it and then run `pip` or `easy_install`:
+  > pip setup.py install
 
 * Quick summary
 * Version

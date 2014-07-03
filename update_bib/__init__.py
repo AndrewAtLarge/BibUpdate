@@ -93,9 +93,6 @@ class Bibtex(OrderedDict):
     # regular expression to find the bibtex entry on the mrlookup page
     mrlookup_page=re.compile(r"<pre>.*(?P<mr>@.*\})<\/pre>", re.DOTALL)
 
-    # fields from mathscinet that we want to ignore
-    ignore=['coden','mrreviewer','fjournal','issn']
-
     """
     A class which contains all of the information in a bibtex entry for a paper.
     It is called with a string <bib_string> that contains a bibtex entry and it returns
@@ -126,7 +123,7 @@ class Bibtex(OrderedDict):
     def str(self):
         if hasattr(self,'pub_type'):
             return '@%s{%s,\n  %s\n}' % (self.pub_type.upper(), self.cite_key, ',\n  '.join('%s = {%s}'%(key,self[key])
-                for key in self.keys() if key not in self.ignore))
+                for key in self.keys() if key not in ignored_fields))
         else:
             return self.bib_string
 
@@ -191,7 +188,6 @@ class Bibtex(OrderedDict):
             print "%s: unable to connect to mrlookup" % (prog)
             sys.exit(2)
 
-
         if self.only_one.search(page):
             # only found one matching entry in MathSciNet
             mr_entry = self.mrlookup_page.search(page)
@@ -225,21 +221,34 @@ bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incolle
                   'mastersthesis', 'misc', 'phdthesis', 'proceedings', 'techreport', 'unpublished']
 
 def main():
-    global prog
+    global prog, ignored_fields
+
+    # fields from mathscinet that we want to ignore
+    ignore=['coden','mrreviewer','fjournal','issn']
     prog=os.path.basename(sys.argv[0])
     usage='Usage: %s filename' % prog
     parser = OptionParser(usage=usage)
-    parser.add_option('-n','--no_warnings',action="store_true", dest="warn",
+    parser.add_option('-n','--no_warnings',action='store_true', dest='warn',
                       help='do not print warnings when replacing bibtex entries')
+    parser.add_option('-i','--ignore',dest='ignore',
+                      default='coden mrreviewer fjournal issn',
+                      help='bibtex fields to ignore')
+    parser.add_option('-k','--keep',dest='keep',action='store_true',
+                      help='keep all fields (ignore none)')
     parser.add_option('-v','--verbose',action='store_true', dest='verbose')
-    parser.set_defaults(warn=True,verbose=False)
+    parser.set_defaults(warn=True,verbose=False,keep=False)
     (options, args) = parser.parse_args()
     # if no filename then exit
-    if len(args)!=1:
+    if len(args)!=1 or (options.keep and not options.ignore in ['','coden mrreviewer fjournal issn']):
         print usage
         sys.exit(1)
+    # parse the options
     verbose=options.verbose
     warn=options.warn
+    if options.keep or options.ignore=='':
+        ignored_fields=[]
+    else:
+        ignored_fields=options.ignore.split(' ')
 
     # opening existing bibfile
     try:
