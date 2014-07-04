@@ -14,8 +14,8 @@ setup(name='bibupdate',
 
       install_requires = ['fuzzywuzzy >= 0.2'],
 
-      license='GPL',
       long_description=open('README.rst').read(),
+      license='GNU General Public License, Version 3, 29 June 2007',
 
       zip_safe=False
 )

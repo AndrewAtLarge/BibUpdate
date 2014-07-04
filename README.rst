@@ -154,10 +154,24 @@ AUTHOR
 ------
 Andrew Mathas
 
+GNU General Public License, Version 3, 29 June 2007
+Copyright (C) 2012-14 Andrew Mathas
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU_General Public License (GPL_)as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
 .. _BibTeX: http://www.bibtex.org/
-.. _hyperref: http://www.ctan.org/pkg/hyperref
+.. _GPL: <http://www.gnu.org/licenses/
 .. _LaTeX: http://en.wikipedia.org/wiki/LaTeX
 .. _MthSciNet: http://www.ams.org/mathscinet/
-.. _mrlookup: http://www.ams.org/mrlookup
-.. _bibupdate: https://bitbucket.org/aparticle/bibupdate
 .. _arXiv: http://arxiv.org/
+.. _bibupdate: https://bitbucket.org/aparticle/bibupdate
+.. _hyperref: http://www.ctan.org/pkg/hyperref
+.. _mrlookup: http://www.ams.org/mrlookup
