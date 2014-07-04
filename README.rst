@@ -167,7 +167,7 @@ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 .. _BibTeX: http://www.bibtex.org/
-.. _GPL: http://www.gnu.org/licenses/
+.. _GPL: http://www.gnu.org/licenses/gpl.html
 .. _LaTeX: http://en.wikipedia.org/wiki/LaTeX
 .. _MthSciNet: http://www.ams.org/mathscinet/
 .. _arXiv: http://arxiv.org/
