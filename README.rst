@@ -149,8 +149,10 @@ Context
 -------
 BibTeX_ is used by the LaTeX_ community to maintain publication databases.
 
-Links
------
+AUTHOR
+------
+Andrew Mathas
+
 .. _BibTeX: http://www.bibtex.org/
 .. _hyperref: http://www.ctan.org/pkg/hyperref
 .. _LaTeX: http://en.wikipedia.org/wiki/LaTeX
@@ -158,7 +160,3 @@ Links
 .. _mrlookup: http://www.ams.org/mrlookup
 .. _bibupdate: https://bitbucket.org/aparticle/bibupdate
 .. _arXiv: http://arxiv.org/
-
-AUTHOR
-------
-Andrew Mathas
