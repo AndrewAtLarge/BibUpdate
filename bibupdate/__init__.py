@@ -22,13 +22,15 @@ r"""
 
     Usage: updata_bib <bibtex file>
 
-    This script tries to use mrlookup to update all of the entries in a bibtex
-    file except for the cite key which remains unchanged. Rather than
-    overwriting the bibtex a new file is created, called updated+filename. The user
-    is advised to check it carefully for any errors in he new file!
+    This script uses mrlookup to try and update the entries in a bibtex file. If
+    the paper if found using mrlookup then the script overwrites all of the
+    field from mrlookup, except for the citation key,  and retains any other
+    existing fields. Rather than overwriting the bibtex a new file is created,
+    called updated_+filename. The user is advised to check it carefully for any
+    errors in he new file!
 
-    On the entries in the bibtex file which do not already have an mrnumber field
-    are checked.
+    By default, only the entries in the bibtex file that do not already have an
+    mrnumber field are checked.
 
     Although some care is taken to make sure that the new bibtex entries are
     correct given the fuzzy nature of the search strings passed to mrlookup, and
@@ -249,16 +251,19 @@ class Bibtex(OrderedDict):
                 if differences!=[] and any(self[key]!='' for k in differences):
                     if options.warn:
                         print_to_user( '-Found updated entry for %s' % self.cite_key )
-                        # warn reader of bad title match
-                        if bad_match(self['title'],new_self['title']):
-                            print_to_user('*Bad title match %s!\n  %s  <-->  %s' % (self.cite_key, self['title'], new_self['title']) )
 
-                    if options.verbose:
-                        print '\n'.join('  %s: %s\n %s-> %s'%(key,self[key], ' '*len(key),
-                                        new_self[key]) for key in differences if self[key]!='')
+                    # if there is a bad title match print this to stdout and DON't update.
+                    if bad_match(self['title'],new_self['title']):
+                        print_to_user('*Entry ignored due: bad title match for %s=%s.\n' % (self.cite_key, self['title']))
+                        if options.verbose:
+                            print_to_user('*The following entry was ignored:\n%s\n' % new_self.str() )
+                    else:
+                        if options.verbose:
+                            print '\n'.join('  %s: %s\n %s-> %s'%(key,self[key], ' '*len(key),
+                                            new_self[key]) for key in differences if self[key]!='')
 
-                    for key in differences:
-                        self[key]=new_self[key]
+                        for key in differences:
+                            self[key]=new_self[key]
         else:
             if options.verbose and not preprint:
                 print_to_user('%sMissed %s: %s'%(' ' if preprint else '!',

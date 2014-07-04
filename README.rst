@@ -35,11 +35,13 @@ use the publication year and its page numbers. To search on mrlookup_ we::
 - use the year only if there are no page numbers and this is NOT a preprint
 - use the title if there are no page numbers (or this is a book)
 
-If this yields a unique match from mrlookup_ then bibupdate_ replaces all of the
-current entries with those from mrlookup_ (retaining any entries not known by
-mrlookup_, such as eprint fields, and the changes to the entries are printed in
-verbose mode.  If the title of the retrieved paper does not (fuzzily) match that
-of the original article then a warning is printed.
+If there is a unique match from mrlookup_ then bibupdate_ replaces all of the
+current entries with those from mrlookup_, except for the citation key. The
+values of any fields that are not specified by mrlookup_, such as eprint fields,
+are retained. In the default verbose mode all of the changes to the fields are
+printed. If the title of the retrieved paper does not (fuzzily) match that of
+the original article then the entry is NOT updated and a warning message is
+printed.
 
 Although some care is taken to make sure that the new BibTeX_ entries correspond
 to the same paper that the original entry referred to there is always a chance
