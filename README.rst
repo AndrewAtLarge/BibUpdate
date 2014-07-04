@@ -11,11 +11,11 @@ checking of an entry by giving it an empty *mrnumber* field).
 
 **Options**::
 
-  -a, --all                   check ALL BibTeX_ entries against mrlookup
-  -h, --help                  show this help message and exit
-  -f, --font                  do not replace fonts \germ and \scr
+  -a, --all                   Check ALL BibTeX_ entries against mrlookup
+  -h, --help                  Show this help message and exit
+  -f, --font                  Do not replace fonts \germ and \scr
   -i IGNORE, --ignore=IGNORE  A string of BibTeX_ fields to ignore when printing
-  -n, --no_warnings           do not print warnings when replacing BibTeX_ entries
+  -n, --no_warnings           Do not print warnings when replacing BibTeX_ entries
   -q, --quiet                 Do not print a list of changes (default on)
   -v, --version               Print version and exit
 
