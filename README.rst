@@ -4,18 +4,18 @@ bibupdate
 
 This script is a command line tool for updating the entries in a BibTeX_ file
 using mrlookup_. By default bibupdate_ tries to find an updated entry for each
-paper unless the entry already has an *mrnumber* field (you can disable future
-checking of an entry by giving it an empty *mrnumber* field).
+paper unless the entry already has an **mrnumber** field (you can disable future
+checking of an entry by giving it an empty **mrnumber** field).
 
 **Usage** bibupdate_ <file.bib>
 
 **Options**::
 
-  -a, --all                   Check ALL BibTeX_ entries against mrlookup
+  -a, --all                   Check ALL BibTeX entries against mrlookup
   -h, --help                  Show this help message and exit
   -f, --font                  Do not replace fonts \germ and \scr
   -i IGNORE, --ignore=IGNORE  A string of BibTeX_ fields to ignore when printing
-  -n, --no_warnings           Do not print warnings when replacing BibTeX_ entries
+  -n, --no_warnings           Do not print warnings when replacing BibTeX entries
   -q, --quiet                 Do not print a list of changes (default on)
   -v, --version               Print version and exit
 
@@ -36,10 +36,10 @@ use the publication year and its page numbers. To search on mrlookup_ we::
 - use the title if there are no page numbers (or this is a book)
 
 If this yields a unique match from mrlookup_ then bibupdate_ replaces all of the
-current entries with those from mrlookup_ (any entries not known by mrlookup_
-are retained), and the changes to the entries are printed in verbose mode.
-If the title of the retrieved paper does not (fuzzily) match that of the
-original article then a warning is printed.
+current entries with those from mrlookup_ (retaining any entries not known by
+mrlookup_, such as eprint fields, and the changes to the entries are printed in
+verbose mode.  If the title of the retrieved paper does not (fuzzily) match that
+of the original article then a warning is printed.
 
 Although some care is taken to make sure that the new BibTeX_ entries correspond
 to the same paper that the original entry referred to there is always a chance
@@ -54,13 +54,13 @@ BibTeX_ entries (the new fields added to an entry are not printed). Comparing th
 old and new versions of your database with programs like *diff* and *tkdiff* is
 highly recommended.
 
-I wrote this class because with the advent of hyperref_ I wanted to be able to
-add links to journals, the arXiv_ and DOIs in the bibliographies of my papers.
-This script allowed me to add the missing urls and DOI fields to my BibTeX_
-database. As a bonus the script corrected many minor errors that I had entered
-over the years (for example, incorrect page numbers and years). The program is
-still useful because it is quite successful in updating the preprint entries in
-my database when the papers are published.
+I wrote this class because with the advent of hyperref_ I wanted to add links to
+journals, the arXiv_ and DOIs in the bibliographies of my papers.  This script
+allowed me to add the missing urls and DOI fields to my BibTeX_ database. As a
+bonus the script corrected many minor errors that I had crept into my \BibTeX_
+file over the years (for example, incorrect page numbers and years). The program
+is still useful because it is quite successful in updating the preprint entries
+in my database when the papers are published.
 
 As bibupdate_ calls mrlookup_ this program will only be useful if you have
 papers in your database that are listed in MathSciNet_.
@@ -75,7 +75,7 @@ is not so obvious.
 
   By default bibupdate_ only checks each BibTeX_ entry with the mrlookup
   database if the entry does *not* have an **mrnumber** field. With this switch
-  all entries are checked.
+  all entries are checked and updated.
 
 -f, --font                  do not replace fonts \germ and \scr
 
@@ -143,7 +143,8 @@ There are two installation routes.
 
 To do
 -----
-* Find the best match when mrlookup_ returns multiple entries...
+* Continuing searching or find the best match when mrlookup_ returns multiple entries.
+* Allow search fields to be specified.
 
 Context
 -------
