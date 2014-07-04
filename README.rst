@@ -2,12 +2,12 @@
 bibupdate
 =========
 
+**Usage** bibupdate_ <file.bib>
+
 This script is a command line tool for updating the entries in a BibTeX_ file
 using mrlookup_. By default bibupdate_ tries to find an updated entry for each
 paper unless the entry already has an **mrnumber** field (you can disable future
 checking of an entry by giving it an empty **mrnumber** field).
-
-**Usage** bibupdate_ <file.bib>
 
 **Options**::
 
