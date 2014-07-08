@@ -21,7 +21,8 @@ checking of an entry by giving it an empty **mrnumber** field).
 
 **Note:** bibupdate_ does not change your original database file. Instead, it creates a
 new file with the name *updated_file.bib*, if your original file was *file.bib*.
-As described below, you should check the new file for errors.
+As described below, you should check the new file for errors before deleting the
+original version of your bibtex_ file.
 
 This script attempts to add missing fields to the papers in a BibTeX_ database
 file by querying mrlookup_ and getting the missing information from there. This
@@ -56,13 +57,13 @@ an entry are not printed). Once bibupdate_ has finished it is recommended that
 you compare the old and new versions of your database with programs like *diff*
 and *tkdiff*.
 
-I wrote this class because with the advent of hyperref_ I wanted to add links to
-journals, the arXiv_ and DOIs in the bibliographies of my papers.  This script
-allowed me to add the missing urls and DOI fields to my BibTeX_ database. As a
-bonus the script corrected many minor errors that I had crept into my BibTeX_
-file over the years (for example, incorrect page numbers and years). The program
-is still useful because it is quite successful in updating the preprint entries
-in my database when the papers are published.
+I wrote this script because, using hyperref_, I wanted to automatically add
+links to journals, the arXiv_ and DOIs to the bibliographies of my papers. This
+script allowed me to add the missing urls and DOI fields to my BibTeX_ database.
+As a bonus the script helped me to correct many minor errors that I had crept
+into my BibTeX_ file over the years (for example, incorrect page numbers and
+years). The program is still useful because it is quite successful in updating
+the preprint entries in my database when the papers are published.
 
 As bibupdate_ calls mrlookup_ this program will only be useful if you have
 papers in your database that are listed in MathSciNet_.
@@ -173,7 +174,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 .. _BibTeX: http://www.bibtex.org/
 .. _GPL: http://www.gnu.org/licenses/gpl.html
 .. _LaTeX: http://en.wikipedia.org/wiki/LaTeX
-.. _MthSciNet: http://www.ams.org/mathscinet/
+.. _MathSciNet: http://www.ams.org/mathscinet/
 .. _arXiv: http://arxiv.org/
 .. _bibupdate: https://bitbucket.org/aparticle/bibupdate
 .. _hyperref: http://www.ctan.org/pkg/hyperref
