@@ -19,7 +19,7 @@ checking of an entry by giving it an empty **mrnumber** field).
   -w  --warnings              Print only warnings when updating entries
   -v, --version               Print version and exit
 
-bibupdate_ does not change your original database file. Instead, it creates a
+**Note:** bibupdate_ does not change your original database file. Instead, it creates a
 new file with the name *updated_file.bib*, if your original file was *file.bib*.
 As described below, you should check the new file for errors.
 
@@ -114,7 +114,8 @@ is not so obvious.
   on mrlookup_ (either because there are no matches or because there are too
   many). If it is not able to find the paper in the mrlookup_ database and
   bibupdate_ thinks that the paper is not a preprint then it will mark the
-  missing entry with an exclamation mark. Here is some sample output::
+  missing entry with an exclamation mark, to highlight that it thinks that it
+  should have found the entry in mrlookup_ but failed. Here is some sample output::
 
      Missed Webster:CanonicalBasesHigherRep: Canonical bases and higher representatio
     -Found updated entry for Weyl
@@ -123,13 +124,15 @@ is not so obvious.
      Missed Williamson:JamesLusztig: Schubert calculus and torsion
     !Missed QSAII: On Quantitative Substitutional Analysis
 
-  Of the three missed entries above, bibupdate_ thinks that the first two are
-  preprints and that the final one should have been published. With the one
-  entry that bibupdate_ found it updated only the publisher entry to include the
+  Each bibtex_ entry is identified by the citation key and the document title,
+  as specified by your database. Of the three missed entries above, bibupdate_
+  thinks that the first two are preprints (they are not marked with an !), that
+  the final one should already have been published. With the entry that
+  bibupdate_ found, only the publisher entry was changed so that it includes the
   city of the publisher.
 
   In *warning mode*, with the -w option,  you are just "warned" when changes are
-  being made to an entry That is, when papers are found (with changes) or when
+  being made to an entry. That is, when papers are found (with changes) or when
   they are missed and bibupdate_ thinks that they are not preprints. In *quiet
   mode*, with the -q option, the program only reports when something goes wrong.
 
