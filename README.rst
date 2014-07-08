@@ -38,10 +38,10 @@ use the publication year and its page numbers. To search on mrlookup_ we::
 If there is a unique match from mrlookup_ then bibupdate_ replaces all of the
 current entries with those from mrlookup_, except for the citation key. The
 values of any fields that are not specified by mrlookup_, such as eprint fields,
-are retained. By default, all of the changes to the fields are
-printed. If the title of the retrieved paper does not (fuzzily) match that of
-the original article then the entry is NOT updated and a warning message is
-printed.
+are retained. By default, a message is printed whenever existing fields in the
+database are changed. If the title of the retrieved paper does not (fuzzily)
+match that of the original article then the entry is NOT updated and a warning
+message is printed.
 
 Although some care is taken to make sure that the new BibTeX_ entries correspond
 to the same paper that the original entry referred to there is always a chance
@@ -52,8 +52,9 @@ to check the updated file BibTeX_ file carefully for errors!*
 
 To help with comparing the updated entries the program prints a detailed list of
 all changes that are made to existing BibTeX_ entries (the new fields added to
-an entry are not printed). Comparing the old and new versions of your database
-with programs like *diff* and *tkdiff* is highly recommended.
+an entry are not printed). Once bibupdate_ has finished it is recommended that
+you compare the old and new versions of your database with programs like *diff*
+and *tkdiff*.
 
 I wrote this class because with the advent of hyperref_ I wanted to add links to
 journals, the arXiv_ and DOIs in the bibliographies of my papers.  This script
