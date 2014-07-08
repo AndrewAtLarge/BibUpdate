@@ -20,7 +20,7 @@ r"""
 #
 #*****************************************************************************
 
-    Usage: updata_bib <bibtex file>
+    Usage: bibupdate [options] <bibtex file>
 
     This script uses mrlookup to try and update the entries in a bibtex file. If
     the paper if found using mrlookup then the script overwrites all of the
@@ -39,13 +39,6 @@ r"""
 
     Andrew Mathas
 
-
-TODO:
-    - find the best match when mrlookup returns multiple entries!
-    - copy the original file to *.bak and put the updated file in its place.
-    - add a feature to CHECK the current entries for correctness
-    - better output to summarise changes
-
 """
 
 import urllib, re, sys, os
@@ -53,10 +46,18 @@ from collections import OrderedDict
 from fuzzywuzzy import fuzz
 from optparse import OptionParser
 
-# possible types of entries in a bibtex database
+# define a regular expression for extracting papers from BibTeX file
+bibtex_entry=re.compile('(@[^@]*})\s*',re.DOTALL)
+
+# to help in checking syntax define recognised/valid types of entries in a bibtex database
 bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incollection', 'inproceedings', 'manual',
                   'mastersthesis', 'misc', 'phdthesis', 'proceedings', 'techreport', 'unpublished']
 
+# need to massage some of the font specifications returned by mrlookup to "standard" latex fonts.
+replacement_fonts=[ ('mathbb', re.compile(r'\Bbb (\w)'), re.compile(r'\Bbb\s*({\w*})')),
+                    ('mathscr', re.compile(r'\scr (\w)'), re.compile(r'\scr\s*({\w*})')),
+                    ('mathfrak', re.compile(r'\germ (\w)'), re.compile(r'\germ\s*({\w*})'))
+]
 def font_replace(string):
     r"""
     Return a new version of `string` with various fonts commands replaced with 
@@ -64,15 +65,15 @@ def font_replace(string):
 
     Currently::
 
-        - \scr --> \mathscr
-        - \germ -> \mathfrak
-
-    This is not perfect because `\germ O` should be replaced with `\mathfrak{O}`
-    and `\germ g\germ l` should be replaced with `\mathfrak{gl}`.
+        - \Bbb X*  --> \mathbb{X*}
+        - \scr X*  --> \mathscr{X*}
+        - \germ X* --> \mathfrak{X*}
     """
-    fonts={r'\scr':r'\mathcal', r'\germ': r'\mathfrak'}
-    for word in fonts:
-        string=string.replace(word, fonts[word])
+    new_string=''
+    last=0
+    for rep in replacement_fonts:
+        string=rep[1].sub(r'%s{\1}'%rep[0], string)   # eg. \Bbb C    --> \mathbb{C}
+        string=rep[2].sub(r'%s{\1}'%rep[0], string)   # eg. \germ{sl} --> \mthfrak{sl}
     return string
 
 def print_to_user(comment):
@@ -83,6 +84,7 @@ def print_to_user(comment):
 
 # regular expression for cleaning TeX from title etc
 tex_clean=re.compile(r'[{}\'"_$]')
+
 
 def bad_match(one,two):
     r"""
@@ -112,7 +114,7 @@ class Bibtex(OrderedDict):
     expressions are certainly effective.
     """
     # regular expression to extract a bibtex entry from a string
-    parse_bibtex_entry=re.compile(r"(?P<pub_type>@\w*)\s*\{\s*(?P<cite_key>\S*)\s*,\s*?(?P<keys_and_vals>.*\})[,\s]*\}", re.MULTILINE|re.DOTALL)
+    parse_bibtex_entry=re.compile(r"@(?P<pub_type>\w*)\s*\{\s*(?P<cite_key>\S*)\s*,\s*?(?P<keys_and_vals>.*\})[,\s]*\}", re.MULTILINE|re.DOTALL)
 
     # regular expression to extract pairs of keys and values from a bibtex string
     bibtex_keys=re.compile('(\w*)\s*=\s*(\{[^=]*\},?$)', re.MULTILINE | re.DOTALL )
@@ -128,7 +130,7 @@ class Bibtex(OrderedDict):
     only_one_match=re.compile('Retrieved all documents')
 
     # regular expression to find the bibtex entry on the mrlookup page
-    mrlookup_page=re.compile(r"<pre>.*(?P<mr>@.*\})<\/pre>", re.DOTALL)
+    mrlookup_page=re.compile(r"<pre>.*(?P<mr>@.*\})<\/pre>", re.DOTALL | re.MULTILINE)
 
     """
     A class which contains all of the information in a bibtex entry for a paper.
@@ -145,10 +147,10 @@ class Bibtex(OrderedDict):
         entry=self.parse_bibtex_entry.search(bib_string)
         if entry is None:
             #print_to_user( 'PARSE ERROR: %s'%(bib_string) )
+            self.cite_key=None
             self.bib_string=bib_string
         else:
             self.pub_type=entry.group('pub_type').strip().lower()
-            if self.pub_type[0]=='@': self.pub_type=self.pub_type[1:]
             self.cite_key=entry.group('cite_key').strip()
             for (key,val) in self.bibtex_keys.findall(entry.group('keys_and_vals')):
                 # move trailing commas, braces and extra white space from val
@@ -156,12 +158,15 @@ class Bibtex(OrderedDict):
                 if val[0] =='{': val=val[1:]
                 if val[-1]=='}': val=val[:-1]
                 val=' '.join(val.strip(',').split())
-                if options.replace_fonts:
+                if options.font_replace:
                     self[key.lower()]=font_replace(val)
                 else:
                     self[key.lower()]=val
 
     def str(self):
+        r"""
+        Return a string for printing the bibtex entry.
+        """
         if hasattr(self,'pub_type'):
             return '@%s{%s,\n  %s\n}' % (self.pub_type.upper(), self.cite_key, ',\n  '.join('%s = {%s}'%(key,self[key])
                 for key in self.keys() if key not in options.ignored_fields))
@@ -178,6 +183,13 @@ class Bibtex(OrderedDict):
         except KeyError:
             return default
 
+    def has_valid_pub_type(self):
+        r"""
+        Return True if the entry has a valid pub_type, as determined by
+        bibtex_pub_types, and False otherwise.
+        """
+        return hasattr(self, 'pub_type') and (self.pub_type in bibtex_pub_types)
+
     def mr_update(self):
         """
         Uses mrlookup to search for a more up-to-date version of this entry. If
@@ -187,7 +199,6 @@ class Bibtex(OrderedDict):
         To search with mrlookup we look for papers published by the first author in the
         given year with the right page numbers.
         """
-
         # only check mathscinet for books or articles for which we don't already have it
         if not options.check_all and (self.has_key('mrnumber')
            or self.pub_type not in ['book','article','inproceedings','incollection']):
@@ -241,71 +252,87 @@ class Bibtex(OrderedDict):
             print "%s: unable to connect to mrlookup" % (options.prog)
             sys.exit(2)
 
-        if self.only_one_match.search(page):
-            # only found one matching entry in MathSciNet
-            mr_entry = self.mrlookup_page.search(page)
-            if not mr_entry is None:
-                # We extract the updated entry and use it to update all fields
-                new_self=Bibtex(mr_entry.group('mr'))
-                differences=[key for key in new_self if key not in options.ignored_fields and self[key]<>new_self[key]]
-                if differences!=[] and any(self[key]!='' for k in differences):
-                    if options.warn:
-                        print_to_user( '-Found updated entry for %s' % self.cite_key )
 
-                    # if there is a bad title match print this to stdout and DON't update.
-                    if bad_match(self['title'],new_self['title']):
-                        print_to_user('*Entry ignored due: bad title match for %s=%s.\n' % (self.cite_key, self['title']))
-                        if options.verbose:
-                            print_to_user('*The following entry was ignored:\n%s\n' % new_self.str() )
-                    else:
-                        if options.verbose:
-                            print '\n'.join('  %s: %s\n %s-> %s'%(key,self[key], ' '*len(key),
-                                            new_self[key]) for key in differences if self[key]!='')
+        # attempt to match self with the bibtex entries returned by mrlookup
+        try:
+            matches=[Bibtex(mr.groups(0)[0]) for mr in bibtex_entry.finditer(page)]
+            matches=[mr for mr in matches if not mr is None 
+                                          and mr.has_valid_pub_type() 
+                                          and not bad_match(self['title'], mr['title'])]
+        except False:
+            print 'Something went wrong!'
+            matches=[]
 
-                        for key in differences:
-                            self[key]=new_self[key]
+        if len(matches)==1:
+            # only found one matching entry from mrlookup
+            match=matches[0]
+            differences=[key for key in match if key not in options.ignored_fields and self[key]<>match[key]]
+            if differences!=[] and any(self[key]!='' for k in differences):
+                if options.warn:
+                    print_to_user( '-Found entry for %s: updating %s' % (self.cite_key, ' '.join(differences)))
+
+                if options.verbose:
+                    print_to_user('\n'.join('  %s: %s\n %s-> %s'%(key,self[key], ' '*len(key),
+                                    match[key]) for key in differences if self[key]!=''))
+
+                for key in differences:
+                    self[key]=match[key]
+
         else:
             if options.verbose and not preprint:
-                print_to_user('%sMissed %s: %s'%(' ' if preprint else '!',
+                print_to_user('%sMissed (%d) %s: %s'%(' ' if preprint else '!', len(matches),
                        self.cite_key, self['title'][:40] if self.has_key('title') else '???'))
 
 def main():
+    # set and parse the options to bibupdate
     global options
 
-    # fields from mathscinet that we want to ignore
     prog=os.path.basename(sys.argv[0])
-    usage='Usage: %s filename' % prog
+    usage='Usage: %s [options] <bibtex file>' % prog
     parser = OptionParser(usage=usage)
     parser.add_option('-a','--all',action='store_true',dest='check_all',
                       help='check ALL BibTeX entries against mrlookup')
-    parser.add_option('-f','--font',dest='replace_fonts',action='store_false',
-                      help='do not replace fonts \germ and \scr')
+    parser.add_option('-f','--font_replace',dest='font_replace',action='store_false',
+                      help='do not replace fonts \Bbb, \germ and \scr')
     parser.add_option('-i','--ignore',dest='ignore',
                       default='coden mrreviewer fjournal issn',
                       help='a string of bibtex fields to ignore when printing')
-    parser.add_option('-n','--no_warnings',action='store_true', dest='warn',
+    parser.add_option('-w','--warnings',action='store_true', dest='warn',
                       help='do not print warnings when replacing bibtex entries')
-    parser.add_option('-q','--quiet',action='store_false', dest='verbose')
+    parser.add_option('-q','--quiet',action='store_true', dest='quiet')
     parser.add_option('-v','--version',action='store_true', dest='version')
     parser.set_defaults(check_all=False,
-                        replace_fonts=True,
+                        quiet=False,
+                        font_replace=True,
                         verbose=True,
                         version=False,
-                        warn=True,
+                        warn=False
                        )
     (options, args) = parser.parse_args()
     # if no filename then exit
     if options.version:
         import pkg_resources  # part of setuptools
-        print_to_user('bibupdate Version %s' % pkg_resources.require("bibupdate")[0].version)
-        print_to_user('Distributed under the GNU General Public License, Version 3')
+        print_to_user('bibupdate: update entries in a bibtex database using mrlookup')
+        print_to_user('Version %s. Available under GPL 3' % pkg_resources.require("bibupdate")[0].version)
         sys.exit()
     elif len(args)!=1:
         print usage
         sys.exit(1)
+
     # parse the options
     options.prog=prog
     options.ignored_fields=[field for field in options.ignore.split()]
+    # set verbose, warn and quiet correctly
+    if options.warn:
+        options.verbose=False
+        if options.quiet:
+            print_to_user('%s\nThe options --quiet and --warn are mutually exclusive' % usage)
+            sys.exit(1)
+    if options.quiet:
+        options.verbose=False
+        options.warn=False
+    if options.verbose:
+        options.warn=True
 
     # open the existing BibTeX file
     try:
@@ -323,21 +350,19 @@ def main():
         print "%s: unable to open new bibtex file new%s" % (prog, args[0])
         sys.exit(2)
 
-    # define a regular expression for extracting papers from BibTeX file
-    bibtex_entry=re.compile('(@[^@]*})\s*',re.DOTALL)
 
-    for bibentry in bibtex_entry.finditer(papers):
+    asterisk=papers.index('@')
+    for bibentry in bibtex_entry.finditer(papers[asterisk:]):
         if not bibentry is None:
             bt=Bibtex(bibentry.group())
-            if hasattr(bt, 'pub_type'):
-                if bt.pub_type in bibtex_pub_types:
-                    bt.mr_update()
-                else:
-                    print_to_user( 'Unknown pub_type %s for %s'%(bt.pub_type, bt_cite_key) )
+            if bt.has_valid_pub_type():
+                bt.mr_update()
+            else:
+                if options.verbose and not bt.cite_key is None:
+                    print_to_user('Unknown pub_type %s for %s' % (bt.pub_type, bt.cite_key))
 
-
-            # now save the new improved entry
-            newbibfile.write(bt.str()+'\n\n')
+        # now save the new (and hopefully) improved entry
+        newbibfile.write(bt.str()+'\n\n')
 
     newbibfile.close()
 
