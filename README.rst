@@ -11,13 +11,17 @@ checking of an entry by giving it an empty **mrnumber** field).
 
 **Options**::
 
-  -a, --all                   Check ALL BibTeX entries against mrlookup
-  -h, --help                  Show this help message and exit
-  -f, --font_replace          Do not replace fonts \\germ and \\scr
-  -i IGNORE, --ignore=IGNORE  A string of BibTeX_ fields to ignore when printing
-  -q, --quiet                 Print almost no messages when updating entries
-  -w  --warnings              Print only warnings when updating entries
-  -v, --version               Print version and exit
+  -h, --help                 Show this help message and exit
+  -a, --all                  Check ALL BibTeX entries against mrlookup
+  -f, --font_replace         Do NOT replace fonts \Bbb, \germ and \scr
+  -i IGNORE, --ignore=IGNORE A string of bibtex fields to ignore when printing
+  -m, --mrlookup             Use mrlookup to update bibtex entries (default)
+  -M, --mathscinet           Use mathscinet to update bibtex entries (less
+                             powerful)
+  -w, --warnings             Only print warnings when replacing bibtex entries
+  -q, --quiet                Only print error messages
+  -V, --verbose              Describe all new fields added to bibtex entries
+  -v, --version              Print version number and exit
 
 **Note:** bibupdate_ does not change your original database file. Instead, it creates a
 new file with the name *updated_file.bib*, if your original file was *file.bib*.
@@ -31,7 +35,7 @@ authors or the title of the article and both of these can have non-standard
 representations. If the article is already published then it is also possible to
 use the publication year and its page numbers. To search on mrlookup_ we::
 
-- use the authors (can be problematic with names with von etc)
+- use the authors (can be problematic because of accents and names with von etc)
 - use the page numbers, if they exist
 - use the year only if there are no page numbers and this is NOT a preprint
 - use the title if there are no page numbers (or this is a book)
@@ -45,11 +49,11 @@ match that of the original article then the entry is NOT updated and a warning
 message is printed.
 
 Although some care is taken to make sure that the new BibTeX_ entries correspond
-to the same paper that the original entry referred to there is always a chance
-the new entry corresponds to an entirely different paper because. In my
-experience this happens only rarely, and mostly with unpublished manuscripts. In
-any case, before you delete you original BibTeX_ file *you are strongly advised
-to check the updated file BibTeX_ file carefully for errors!*
+to the same paper that the original entry referred to there is always a (very
+small) chance the new entry corresponds to an entirely different paper.  In my
+experience this happens rarely, and mostly with unpublished manuscripts. In any
+case, before you delete you original BibTeX_ file *you are strongly advised to
+check the updated file BibTeX_ file carefully for errors!*
 
 To help with comparing the updated entries the program prints a detailed list of
 all changes that are made to existing BibTeX_ entries (the new fields added to
@@ -57,16 +61,18 @@ an entry are not printed). Once bibupdate_ has finished it is recommended that
 you compare the old and new versions of your database with programs like *diff*
 and *tkdiff*.
 
-I wrote this script because, using hyperref_, I wanted to automatically add
-links to journals, the arXiv_ and DOIs to the bibliographies of my papers. This
-script allowed me to add the missing urls and DOI fields to my BibTeX_ database.
-As a bonus the script helped me to correct many minor errors that I had crept
-into my BibTeX_ file over the years (for example, incorrect page numbers and
-years). The program is still useful because it is quite successful in updating
-the preprint entries in my database when the papers are published.
+I wrote this script because I wanted to automatically add links to journals, the
+arXiv_ and DOIs to the bibliographies of my papers using hyperref_. This script
+allowed me to add the missing urls and DOI fields to my BibTeX_ database. As a
+bonus the script helped me to correct many minor errors that had crept into my
+BibTeX_ file over the years (for example, incorrect page numbers and years). Now
+I use the program to automatically update the preprint entries in my database
+when the papers appear in MathSciNet_ after they are published.
 
 As bibupdate_ calls mrlookup_ this program will only be useful if you have
-papers in your database that are listed in MathSciNet_.
+papers in your database that are listed in MathSciNet_. As described below it is
+also possible to call MathSciNet_ directly, however, this is less flexible
+because the *mrnumber* field for each paper is required.
 
 Options and their defaults
 --------------------------
@@ -106,8 +112,20 @@ is not so obvious.
   .. bibupdate -i "coden fjournal" file.bib  # ignore just coden and fjournal
   .. bibupdate -i "" file.bib                # do not ignore any fields
 
--q, --quiet                 Do not print a list of changes (default off)
--w, --warnings              Print only warnings when replacing BibTeX_ entries
+-m --mrlookup            Use mrlookup to update bibtex entries (default)
+-M --mathscinet          Use mathscinet to update bibtex entries
+
+  By default mrlookup_ is used to update the BibTeX_ entries in the database.
+  This has he advantage of being a free service provided by the American
+  Mathematical Society. A second advantage is the more flexible searching is
+  possible when \mrlookup_ is used. It is also possible to update BibTeX_
+  entries using MathSciNet_, however, these searches are currently only possible
+  using the **mrnumber** field (so this option only does something if combined
+  with the -all option).
+
+-q, --quiet      Only print error messages
+-w, --warnings   Only print warnings when replacing BibTeX_ entries
+-verbose         Describe all new fields added to bibtex entries (default)
 
   There are three levels of verbosity in how bibupdate_ describes the changes that
   it is making. By default all additions to the BibTeX_ entry are printed (to stdout).
@@ -156,6 +174,10 @@ There are two installation routes.
 Context
 -------
 BibTeX_ is used by the LaTeX_ community to maintain publication databases.
+
+To do
+-----
+ - Work out the calling syntax for MathSciNet_ to allow proper searching there.
 
 AUTHOR
 ------
