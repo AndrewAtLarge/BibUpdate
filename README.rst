@@ -11,17 +11,22 @@ checking of an entry by giving it an empty **mrnumber** field).
 
 **Options**::
 
-  -h, --help                 Show this help message and exit
-  -a, --all                  Check ALL BibTeX entries against mrlookup
-  -f, --font_replace         Do NOT replace fonts \Bbb, \germ and \scr
-  -i IGNORE, --ignore=IGNORE A string of bibtex fields to ignore when printing
-  -m, --mrlookup             Use mrlookup to update bibtex entries (default)
-  -M, --mathscinet           Use mathscinet to update bibtex entries (less
-                             powerful)
-  -w, --warnings             Only print warnings when replacing bibtex entries
-  -q, --quiet                Only print error messages
-  -V, --verbose              Describe all new fields added to bibtex entries
-  -v, --version              Print version number and exit
+usage: bibupdate [-h] [-c] [-f] [-i fields] [-q] [-m | -M] bibtexfile
+
+A script for updating bibtex database files
+
+positional arguments:
+  bibtexfile            bibtex file to update
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c, --check_all       check ALL BibTeX entries against mrlookup
+  -f, --font_replace    do NOT replace fonts \Bbb, \germ and \scr
+  -i fields, --ignore fields
+                        a string of bibtex fields to ignore when printing
+  -q, --quietness       reduce how verbose the output
+  -m, --mrlookup        use mrlookup to update bibtex entries (default)
+  -M, --mathscinet      use mathscinet to update bibtex entries (less powerful)
 
 **Note:** bibupdate_ does not change your original database file. Instead, it creates a
 new file with the name *updated_file.bib*, if your original file was *file.bib*.

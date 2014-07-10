@@ -1,45 +1,27 @@
 #!/usr/bin/env python
 
 r"""
-#*****************************************************************************
-#    bibupdate - a script for updating a bibtex database file using mrlookup
-#    Copyright (C) 2012-14 Andrew Mathas andrew.mathas@sydney.edu.au
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-#*****************************************************************************
+==============================================
+bibupdate - a script for updating bibtex files
+==============================================
 
-    Usage: bibupdate [options] <bibtex file>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    This script uses mrlookup to try and update the entries in a bibtex file. If
-    the paper if found using mrlookup, or mathscient, then the script overwrites
-    all of the fields from mrlookup, except for the citation key, retaining any
-    other existing fields. Rather than overwriting the bibtex a new file is
-    created, called updated_+filename. The user is advised to check the new
-    database file carefully for any errors because, even though it is unlikely
-    it is potentially for bibupdate to replace a given bibtex entry with the
-    details of a completely different paper.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-    By default, only the entries in the bibtex file that do not already have an
-    mrnumber field are checked.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-    Although some care is taken to make sure that the new bibtex entries are
-    correct given the fuzzy nature of the search strings passed to mrlookup, and
-    possible errors in the existing bibtex file, there are no guarantees so you
-    are advised to check the updated file carefully!
+See https://bitbucket.org/aparticle/bibupdate for more details.
 
-    Andrew Mathas
+Andrew Mathas andrew.mathas@sydney.edu.au
+Copyright (C) 2012-14 
 """
 
 import re, sys, urllib
@@ -48,8 +30,9 @@ from fuzzywuzzy import fuzz
 from os import path
 
 import pkg_resources  # part of setuptools
-version=r'''%(prog)s v{version}: update entries in a bibtex database
-Available under GNU General Public License 3
+version=r'''
+%(prog)s version {version}: update entries in a bibtex file
+Available under the GNU General Public License, V3
 '''.format(version=pkg_resources.require("bibupdate")[0].version)
 
 # define a regular expression for extracting papers from BibTeX file
@@ -208,7 +191,7 @@ class Bibtex(OrderedDict):
         except IOError:
             print_to_user('%s: unable to connect to %s' % (options.prog, url))
             sys.exit(2)
-  
+
         # attempt to match self with the bibtex entries returned by mrlookup
         matches=[Bibtex(mr.groups(0)[0]) for mr in bibtex_entry.finditer(page)]
         matches=[mr for mr in matches if mr is not None and mr.has_valid_pub_type()]
@@ -222,15 +205,20 @@ class Bibtex(OrderedDict):
             match=matches[0]
             differences=[key for key in match if key not in options.ignored_fields and self[key]<>match[key]]
             if differences!=[] and any(self[key]!='' for k in differences):
-                warning( '+ %s: updating %s' % (self.cite_key, ' '.join(differences)))
-                verbose('\n'.join('+ %s: %s\n %s-> %s'%(key,self[key], ' '*len(key),
-                                    match[key]) for key in differences if self[key]!=''))
-                for key in differences:
-                    self[key]=match[key]
+                if options.report_errors:
+                    print_to_user('%s\nE %s=%s\n%s' % ('='*30, self.cite_key, self['title'][:50],
+                                  '\n'.join('E %s: %s\n %s-> %s'%(key,self[key], ' '*len(key), match[key]) 
+                                        for key in differences if self[key]!='')))
+                else:
+                    warning( '+ %s: updating %s' % (self.cite_key, ' '.join(differences)))
+                    verbose('\n'.join('+ %s: %s\n %s-> %s'%(key,self[key], ' '*len(key),
+                                        match[key]) for key in differences if self[key]!=''))
+                    for key in differences:
+                        self[key]=match[key]
             else:
                 debugging('No changes')
 
-        else:  # no good match, or good match not unique
+        else:  # no good match, or more than one good match
             if not preprint:
                 verbose('?%s %s=%s'%(' ' if preprint else '!', self.cite_key, 
                                          self['title'][:40] if self.has_key('title') else '???'))
@@ -296,12 +284,14 @@ class Bibtex(OrderedDict):
         Use MathSciNet to check/update the entry using the mrnumber field, if it
         exsists.
         """
-        if hasattr(self,'mrnumber'):
-            search={'fmt': 'bibtex', 'pg1': 'MR', 's1': self['mrnumber']}
+        if self.has_key('mrnumber'):
+            search={'fmt': 'bibtex', 'pg1': 'MR', 's1': self['mrnumber'].split()[0]}
             self.update_entry('http://www.ams.org/mathscinet/search/publications.html', search, False)
 
-def main():
-    # set and parse the options to bibupdate
+def process_options():
+    r"""
+    Set up and then parse the options to bibupdate using argparse.
+    """
     global options, verbose, warning, debugging, massage_fonts
 
     import argparse
@@ -313,66 +303,84 @@ def main():
     parser.add_argument('-f','--font_replace',action='store_false',
                         help='do NOT replace fonts \Bbb, \germ and \scr', default=True)
     parser.add_argument('-i','--ignore',type=str,default='coden mrreviewer fjournal issn',
-                        metavar='fields', help='a string of bibtex fields to ignore when printing')
+                        help='a string of bibtex fields to ignore')
+    parser.add_argument('-r','--report_errors',action='store_true', default=False,
+                        help='report errors but do NOT update file')
     parser.add_argument('-q','--quietness',action='count', default=0,
                         help='decrease number of messages')
+
     # add a mutually exclusive switch for choosing between mrlookup and mathscinet
     lookup=parser.add_mutually_exclusive_group()
     lookup.add_argument('-m','--mrlookup',action='store_const',const='mrlookup',dest='lookup',
                         default='mrlookup',help='use mrlookup to update bibtex entries (default)')
-    lookup.add_argument('-M','--mathscinet',action='store_const',const='mrlookup',dest='lookup',
+    lookup.add_argument('-M','--mathscinet',action='store_const',const='mathscinet',dest='lookup',
                         help='use mathscinet to update bibtex entries (less powerful)')
+
     # suppress printing of these two options
     parser.add_argument('--version',action='version', version=version, help=argparse.SUPPRESS)
     parser.add_argument('-d','--debugging',action='store_true', default=False, help=argparse.SUPPRESS)
+
     # parse the options
     options = parser.parse_args()
     options.prog=parser.prog
     options.ignored_fields=[field for field in options.ignore.split()]
 
-    # set debugging, verbose, warn and quiet correctly
+    # define debugging, verbose and warning functions
     if options.debugging:
         options.quietness=3
         debugging=print_to_user
     else:
-        debugging=lambda *arg, **kw_arg: None
-    verbose=print_to_user if options.quietness==2 else lambda *arg, **kw_arg: None
-    warning=print_to_user if options.quietness>=1 else lambda *arg, **kw_arg: None
+        debugging=lambda *arg: None
+    verbose=print_to_user if options.quietness==2 else lambda *arg: None
+    warning=print_to_user if options.quietness>=1 else lambda *arg: None
 
     # a shortcut function for replacing fonts
     massage_fonts=font_replace if options.font_replace else lambda ti: ti
 
-    # open the existing BibTeX file
+def main():
+    r"""
+    Open the files and the delegate all of the hard work to the BibTeX class.
+    """
+    process_options()
+
+    # now we are ready to open the existing BibTeX file and start working
     try:
         bibfile=open(options.bibtexfile,'r')
         papers=bibfile.read()
         bibfile.close()
+        asterisk=papers.index('@')
     except IOError,e:
-        print "%s: unable to open bibtex file %s" % (options.prog, options.bibtexfile)
+        print_to_user('%s: unable to open bibtex file %s' % (options.prog, options.bibtexfile))
         sys.exit(2)
 
-    # open the replacement BibTeX file
-    try:
-        newbibfile=open('updated_'+options.bibtexfile,'w')
-    except IOError,e:
-        print "%s: unable to open new bibtex file new%s" % (prog, options.bibtexfile)
-        sys.exit(2)
+    # if we are checking for errors then we check EVERYTHING but, in this case,
+    # we don't need to create a new bibtex file
+    if options.report_errors:
+        options.check_all=True
+    else:
+        # open the replacement BibTeX file
+        try:
+            newbibfile=open('updated_'+options.bibtexfile,'w')
+        except IOError,e:
+            print_to_user('%s: unable to open new bibtex file new%s' % (prog, options.bibtexfile))
+            sys.exit(2)
 
-    asterisk=papers.index('@')
-    print 'lookup=%s.'%options.lookup
-    newbibfile.write(papers[:asterisk]) # copy everything up to the first @
+        newbibfile.write(papers[:asterisk]) # copy everything up to the first @
+
+    # finally we are ready to start processing the papers from the bibtex file
     for bibentry in bibtex_entry.finditer(papers[asterisk:]):
         if not bibentry is None:
             bt=Bibtex(bibentry.group())
+            # other pub_types are possible such as @comment{} we first check
             if bt.has_valid_pub_type():
-                getattr(bt, options.lookup)()  # call lookup program`
-            else:
-                verbose('Unknown pub_type %s for %s' % (bt.pub_type, bt.cite_key))
+                getattr(bt, options.lookup)()  # call lookup program
 
-        # now save the new (and hopefully) improved entry
-        newbibfile.write(bt.str()+'\n\n')
+        # now write the new (and hopefully) improved entry
+        if not options.report_errors:
+            newbibfile.write(bt.str()+'\n\n')
 
-    newbibfile.close()
+    if not options.report_errors:
+        newbibfile.close()
 
 ##############################################################################
 if __name__ == '__main__':
