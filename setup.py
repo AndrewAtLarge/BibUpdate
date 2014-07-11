@@ -1,7 +1,8 @@
 from setuptools import setup
 
+import bibupdate
 setup(name='bibupdate',
-      version='1.1',
+      version=bibupdate.__version__,
       description='A script for updating the entries of a bibtex file',
       keywords = 'bibtex, mrlookup, MathSciNet, latex',
 
@@ -15,7 +16,7 @@ setup(name='bibupdate',
       install_requires = ['fuzzywuzzy >= 0.2'],
 
       long_description=open('README.rst').read(),
-      license='GNU General Public License, Version 3, 29 June 2007',
+      license=bibupdate.__license__,
 
       zip_safe=False
 )

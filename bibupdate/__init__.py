@@ -12,13 +12,14 @@ the Free Software Foundation, either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-See https://bitbucket.org/aparticle/bibupdate for more details.
+See https://bitbucket.org/aparticle/bibupdate for more details
+about the bibupdate program.
 
 Andrew Mathas andrew.mathas@sydney.edu.au
 Copyright (C) 2012-14 
@@ -29,11 +30,13 @@ from collections import OrderedDict
 from fuzzywuzzy import fuzz
 from os import path
 
-import pkg_resources  # part of setuptools
-version=r'''
+# Version information
+__version__=1.1
+__license__='GNU General Public License, Version 3, 29 June 2007'
+bibupdate_version=r'''
 %(prog)s version {version}: update entries in a bibtex file
-Available under the GNU General Public License, V3
-'''.format(version=pkg_resources.require("bibupdate")[0].version)
+{license}
+'''.format(version=__version__, license=__license__)
 
 # define a regular expression for extracting papers from BibTeX file
 bibtex_entry=re.compile('(@\s*[A-Za-z]*\s*{[^@]*})\s*',re.DOTALL)
@@ -119,7 +122,7 @@ class Bibtex(OrderedDict):
     # syntax here is very lax: we assume that bibtex fields do not contain the string '=\s+{'.
     # From the AMS the format of a bibtex entry is much more rigid but we cannot
     # assume that an arbitrary bibtex file will respect the AMS conventions.
-    bibtex_keys=re.compile(r'([A-Za-z]+)=\{((?:[^=]|=(?!\{))+)\},?$', re.MULTILINE | re.DOTALL )
+    bibtex_keys=re.compile(r'([A-Za-z]+)=\{((?:[^=]|=(?!\{))+)\},?$', re.MULTILINE|re.DOTALL)
 
     # Regular expression for extracting page numbers: <first page>-*<last page>
     # or simply <page>.
@@ -177,8 +180,10 @@ class Bibtex(OrderedDict):
 
     def update_entry(self, url, search, preprint):
         """
-        Call `url` to search for the bibtex entry as specified by the dictionary `search` 
-        and then update `self` if there is a unique good match.
+        Call `url` to search for the bibtex entry as specified by the dictionary
+        `search` and then update `self` if there is a unique good match. If
+        there is a good match then we update ourself and overwrite all fields
+        with those from mrlookup (and keep any other fields).
 
         The url can (currently) point to mrlookup or to mathscinet.
         """
@@ -225,12 +230,10 @@ class Bibtex(OrderedDict):
 
     def mrlookup(self):
         """
-        Use mrlookup to search for a more up-to-date version of this entry. If
-        we find one then we update ourself and overwrite all fields with those
-        from mrlookup (and keep any other fields).
-
-        To search with mrlookup we look for papers published by the first author in the
-        given year with the right page numbers.
+        Use mrlookup to search for a more up-to-date version of this entry. To
+        search with mrlookup we look for papers published by the first author in
+        the given year with the right page numbers. Most of the work here is in
+        finding the correct search parameters.
         """
         # only check mrlookup for books or articles for which we don't already have an mrnumber field
         if not options.check_all and (self.has_key('mrnumber')
@@ -259,8 +262,10 @@ class Bibtex(OrderedDict):
 
         # mrlookup requires either an author or a title
         if self.has_key('author'):
-            # mrlookup is latex aware and it does a far better job of parsing authors than we ever will,
-            # however, it only recognises authors in the form: Last Name [, First initial]
+            # mrlookup is latex aware and it does a far better job of parsing
+            # authors than we ever will, however, it only recognises authors in
+            # the form "Last Name" -- and sometimes with a first initial as
+            # well. So this is what we need to give it.
             authors=''
             aulist=re.sub(' and ','&',self['author'])
             aulist=aulist.replace('~',' ')
@@ -317,7 +322,7 @@ def process_options():
                         help='use mathscinet to update bibtex entries (less powerful)')
 
     # suppress printing of these two options
-    parser.add_argument('--version',action='version', version=version, help=argparse.SUPPRESS)
+    parser.add_argument('--version',action='version', version=bibupdate_version, help=argparse.SUPPRESS)
     parser.add_argument('-d','--debugging',action='store_true', default=False, help=argparse.SUPPRESS)
 
     # parse the options
