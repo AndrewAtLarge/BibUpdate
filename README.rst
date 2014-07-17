@@ -11,22 +11,25 @@ disable future checking of an entry by giving it an empty **mrnumber** field).
 
 **Options**::
 
-usage: bibupdate [-h] [-c] [-f] [-i fields] [-q] [-m | -M] bibtexfile
+usage: bibupdate [-a] [-f] [-h] [-i IGNORE] [-l LOG] [-q] [-r] [-v] [-m|-M] bibtexfile
 
-A script for updating bibtex database files
+Update and validate BibTeX files
 
 positional arguments:
-  bibtexfile            bibtex file to update
+  bibtexfile            BibTeX file to update
 
 optional arguments:
-  -h, --help            show this help message and exit
-  -c, --check_all       check ALL BibTeX entries against mrlookup
+  -a, --all             update or validate ALL BibTeX entries
   -f, --font_replace    do NOT replace fonts \Bbb, \germ and \scr
-  -i fields, --ignore fields
-                        a string of bibtex fields to ignore when printing
-  -q, --quietness       reduce how verbose the output
+  -h, --help            show this help message and exit
+  -i IGNORE, --ignore IGNORE
+                        a string of bibtex fields to ignore
+  -l LOG, --log LOG     log output to file (defaults to stdout)
   -m, --mrlookup        use mrlookup to update bibtex entries (default)
   -M, --mathscinet      use mathscinet to update bibtex entries (less powerful)
+  -q, --quieter         print fewer messages
+  -r  --replace         replace existing bibtex file
+  -v, --validate        validate all bibtex entries against a database
 
 **Note:** bibupdate_ does not change your original database file. Instead, it creates a
 new file with the name *updated_file.bib*, if your original file was *file.bib*.
@@ -85,7 +88,7 @@ Options and their defaults
 Most of the options are described above. Here is a little extra detail when it
 is not so obvious.
 
--a, --all                   Check ALL BibTeX_ entries against mrlookup
+-a, --all                   Update or validate ALL BibTeX entries
 
   By default bibupdate_ only checks each BibTeX_ entry with the mrlookup
   database if the entry does *not* have an **mrnumber** field. With this switch
@@ -114,8 +117,13 @@ is not so obvious.
 
   This list can be changed using the -i command line option::
 
-  .. bibupdate -i "coden fjournal" file.bib  # ignore just coden and fjournal
-  .. bibupdate -i "" file.bib                # do not ignore any fields
+  .. bibupdate -i "coden fjournal" file.bib   # ignore coden and fjournal
+  .. bibupdate -i coden -i fjournal file.bib  # ignore coden and fjournal
+  .. bibupdate -i "" file.bib                 # do not ignore any fields
+
+-l LOG, --log LOG     log output to file (defaults to stdout)
+
+  Specify a log filename to use for output.
 
 -m --mrlookup            Use mrlookup to update bibtex entries (default)
 -M --mathscinet          Use mathscinet to update bibtex entries
@@ -128,25 +136,34 @@ is not so obvious.
   using the **mrnumber** field (so this option only does something if combined
   with the -all option).
 
--q, --quiet      Only print error messages
--w, --warnings   Only print warnings when replacing BibTeX_ entries
--verbose         Describe all new fields added to bibtex entries (default)
+-q, --quieter    Print fewer messages
 
   There are three levels of verbosity in how bibupdate_ describes the changes that
-  it is making. By default all additions to the BibTeX_ entry are printed (to stdout).
-  In addition, bibupdate_ will tell you when it *is not* able to find the paper
-  on mrlookup_ (either because there are no matches or because there are too
-  many). If it is not able to find the paper in the mrlookup_ database and
-  bibupdate_ thinks that the paper is not a preprint then it will mark the
-  missing entry with an exclamation mark, to highlight that it thinks that it
-  should have found the entry in mrlookup_ but failed. Here is some sample output::
+  it is making. These are determined by the `q` option as follows::
 
-     Missed Webster:CanonicalBasesHigherRep: Canonical bases and higher representatio
-    -Found updated entry for Weyl
-      publisher: Princeton University Press
-              -> Princeton University Press, Princeton, NJ
-     Missed Williamson:JamesLusztig: Schubert calculus and torsion
-    !Missed QSAII: On Quantitative Substitutional Analysis
+  .. bibupdate     bibfile.bib  report all changes (default)
+  .. bibupdate -q  bibfile.bib  only print entries that are printer
+  .. bibupdate -qq bibfile.bib  only printer error messages
+
+  By default all changes are printed (to stdout, although a log file can be
+  specified by the -l option). In the default mode bibupdate_ will tell you what
+  entries it changes and when it *is not* able to find the paper on the database
+  (either because there are no matches or because there are too many). If it is
+  not able to find the paper and bibupdate_ thinks that the paper is not a
+  preprint then it will mark the missing entry with an exclamation mark, to
+  highlight that it thinks that it should have found the entry in mrlookup_ but
+  failed. Here is some sample output::
+
+    ------------------------------
+    ? did not find Webster:CanonicalBasesHigherRep=Canonical bases and higher representatio
+    ++++++++++++++++++++++++++++++
+    + updating Weyl=
+    + publisher: Princeton University Press
+    +         -> Princeton University Press, Princeton, NJ
+    ------------------------------
+    ? did not find Williamson:JamesLusztig=Schubert calculus and torsion
+    ------------------------------
+    ! did not find QSAII=On Quantitative Substitutional Analysis
 
   Each bibtex_ entry is identified by the citation key and the document title,
   as specified by your database. Of the three missed entries above, bibupdate_
@@ -159,6 +176,17 @@ is not so obvious.
   being made to an entry. That is, when papers are found (with changes) or when
   they are missed and bibupdate_ thinks that they are not preprints. In *quiet
   mode*, with the -q option, the program only reports when something goes wrong.
+
+-r  --replace         replace existing bibtex file
+
+  Replace the existing BibTeX_ file with the updated file. A backup version of
+  the original BibTeX_ is made with a .bak extension.
+
+-v --validate validate all bibtex entries against a database
+
+  Prints a list of entries in the BibTeX file that have entries different from
+  those given by the corresponding database. The original BibTeX file is not
+  changed.
 
 
 Installation
@@ -182,8 +210,10 @@ BibTeX_ is used by the LaTeX_ community to maintain publication databases.
 
 To do
 -----
- - Implement more intelliegent searches using MathSciNet_.
- - Interface to the arXiv?
+- Implement more intelligent searches using MathSciNet_.
+- Interface to the arXiv_? In principle, this is easy to do although,
+  ultimately, it would probably not work because the arXiv_ blocks frequent
+  requests from the same IP address in order to discourage robots.
 
 AUTHOR
 ------

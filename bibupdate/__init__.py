@@ -25,12 +25,7 @@ Andrew Mathas andrew.mathas@sydney.edu.au
 Copyright (C) 2012-14 
 """
 
-import re, sys, urllib
-from collections import OrderedDict
-from fuzzywuzzy import fuzz
-from os import path
-
-# Version information
+# Version and license information
 __version__=1.1
 __license__='GNU General Public License, Version 3, 29 June 2007'
 bibupdate_version=r'''
@@ -38,11 +33,52 @@ bibupdate_version=r'''
 {license}
 '''.format(version=__version__, license=__license__)
 
+######################################################
+import argparse, re, sys, urllib
+from collections import OrderedDict
+from fuzzywuzzy import fuzz
+from os.path import dirname, basename
+
+# global options, used mainly for printing
+global options, verbose, warning, debugging, massage_fonts
+
+def bib_print(*args):
+    r"""
+    Default printing mechanism. Defaults to sys.stdout but can be overridden 
+    by the command line options.
+    """
+    for a in args:
+        options.log.write(a+'\n')
+
+def bib_error(*args):
+    r"""
+    Print errors to sys.stderr and also to the log file if it is not sys.stdout.
+    Then exit with an error code of 2.
+    """
+    if options.log!=sys.stdout:
+        bib_print('%s error:' % options.prog)
+        for a in args:
+            bib_print(a)
+
+    sys.stderr.write('%s error: ' % options.prog)
+    for a in args:
+        sys.stderr.write(a+'\n')
+    sys.exit(2)
+
+# exit gracefully fter control-C
+OriginalExceptHook = sys.excepthook
+def NewExceptHook(type, value, traceback):
+    if type == KeyboardInterrupt:
+        bib_error('program killed. Exiting...')
+    else:
+        OriginalExceptHook(type, value, traceback)
+sys.excepthook = NewExceptHook
+
 # define a regular expression for extracting papers from BibTeX file
 bibtex_entry=re.compile('(@\s*[A-Za-z]*\s*{[^@]*})\s*',re.DOTALL)
 
 # regular expression for cleaning TeX from title etc
-remove_tex=re.compile(r'[{}"_$]+')
+remove_tex=re.compile(r'[{}\'"_$]+')
 remove_mathematics=re.compile(r'\$[^\$]+\$')  # assume no nesting
 # savagely remove all maths from title
 clean_title=lambda title: remove_tex.sub('',remove_mathematics.sub('',title))
@@ -73,12 +109,6 @@ def font_replace(string):
         string=rep[1].sub(r'\\%s{\1}'%rep[0], string)   # eg. \Bbb C    --> \mathbb{C}
         string=rep[2].sub(r'\\%s{\1}'%rep[0], string)   # eg. \germ{sl} --> \mthfrak{sl}
     return string
-
-def print_to_user(comment):
-    r"""
-    Print the string `comment' to stdout so that the user knows what is happening.
-    """
-    sys.stdout.write(comment+'\n')
 
 def good_match(one,two):
     r"""
@@ -194,39 +224,39 @@ class Bibtex(OrderedDict):
             page=lookup.read()
             lookup.close()   # close the url feed
         except IOError:
-            print_to_user('%s: unable to connect to %s' % (options.prog, url))
-            sys.exit(2)
+            bib_error('unable to connect to %s' % url)
 
         # attempt to match self with the bibtex entries returned by mrlookup
         matches=[Bibtex(mr.groups(0)[0]) for mr in bibtex_entry.finditer(page)]
         matches=[mr for mr in matches if mr is not None and mr.has_valid_pub_type()]
+        debugging('MR number of matches=%d'%len(matches))
         clean_ti=clean_title(self['title'])
         debugging('MR ti=%s.%s' % (clean_ti, ''.join('\nMR -->%s.'%clean_title(mr['title']) for mr in matches)))
         if clean_ti<>'':
             matches=[mr for mr in matches if good_match(clean_ti, clean_title(mr['title']))]
-        debugging('MR #matches=%d'%len(matches))
+        debugging('MR number of clean matches=%d'%len(matches))
 
         if len(matches)==1:
             match=matches[0]
             differences=[key for key in match if key not in options.ignored_fields and self[key]<>match[key]]
             if differences!=[] and any(self[key]!='' for k in differences):
-                if options.report_errors:
-                    print_to_user('%s\nE %s=%s\n%s' % ('='*30, self.cite_key, self['title'][:50],
-                                  '\n'.join('E %s: %s\n %s-> %s'%(key,self[key], ' '*len(key), match[key]) 
+                if options.check_all:
+                    bib_print('%s\nV %s=%s\n%s' % ('='*30, self.cite_key, self['title'][:50],
+                                  '\n'.join('V %s: %s\nV%s-> %s'%(key,self[key], ' '*len(key), match[key]) 
                                         for key in differences if self[key]!='')))
                 else:
-                    warning( '+ %s: updating %s' % (self.cite_key, ' '.join(differences)))
-                    verbose('\n'.join('+ %s: %s\n %s-> %s'%(key,self[key], ' '*len(key),
+                    warning('%s\n+ Updating %s=%s' % ('+'*30, self.cite_key, self['title'][:50]))
+                    verbose('\n'.join('+ %s: %s\n+%s-> %s'%(key,self[key], ' '*len(key),
                                         match[key]) for key in differences if self[key]!=''))
                     for key in differences:
                         self[key]=match[key]
             else:
-                debugging('No changes')
+                debugging('No change')
 
         else:  # no good match, or more than one good match
             if not preprint:
-                verbose('?%s %s=%s'%(' ' if preprint else '!', self.cite_key, 
-                                         self['title'][:40] if self.has_key('title') else '???'))
+                verbose("%s\n%s Didn't find %s=%s"%('-'*30, '!' if preprint else '!', self.cite_key, 
+                            self['title'][:40] if self.has_key('title') else '???'))
 
     def mrlookup(self):
         """
@@ -280,7 +310,7 @@ class Bibtex(OrderedDict):
                 search['au']=authors[5:]
 
         if self.has_key('title') and len(self['title'])>0 and (not search.has_key('ipage') or preprint):
-            search['ti']=clean_title(self['title'].lower())
+            search['ti']=clean_title(self['title'])
 
         self.update_entry('http://www.ams.org/mrlookup', search, preprint)
 
@@ -299,20 +329,21 @@ def process_options():
     """
     global options, verbose, warning, debugging, massage_fonts
 
-    import argparse
-    parser = argparse.ArgumentParser(description='A script for updating bibtex database files',
-                                     formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('bibtexfile',type=str,help='bibtex file to update')
-    parser.add_argument('-c','--check_all',action='store_true',default=False,
-                        help='check ALL BibTeX entries against mrlookup')
-    parser.add_argument('-f','--font_replace',action='store_false',
-                        help='do NOT replace fonts \Bbb, \germ and \scr', default=True)
+    parser = argparse.ArgumentParser(description='Update and validate BibTeX files',
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    parser.add_argument('bibtexfile',type=argparse.FileType('r'),help='bibtex file to update')
+
+    parser.add_argument('-a','--all',action='store_true',default=False,dest='check_all',
+                        help='update or validate ALL BibTeX entries')
+    parser.add_argument('-c','--check_all',action='store_true', default=False,
+                        help='check all bibtex entries against a database')
+    parser.add_argument('-f','--font_replace',action='store_false', default=False,
+                        help='do NOT replace fonts \Bbb, \germ and \scr')
     parser.add_argument('-i','--ignore',type=str,default='coden mrreviewer fjournal issn',
                         help='a string of bibtex fields to ignore')
-    parser.add_argument('-r','--report_errors',action='store_true', default=False,
-                        help='report errors but do NOT update file')
-    parser.add_argument('-q','--quietness',action='count', default=0,
-                        help='decrease number of messages')
+    parser.add_argument('-l','--log', default=sys.stdout, type=argparse.FileType('w'),
+                        help='log output to file (defaults to stdout)')
 
     # add a mutually exclusive switch for choosing between mrlookup and mathscinet
     lookup=parser.add_mutually_exclusive_group()
@@ -320,6 +351,11 @@ def process_options():
                         default='mrlookup',help='use mrlookup to update bibtex entries (default)')
     lookup.add_argument('-M','--mathscinet',action='store_const',const='mathscinet',dest='lookup',
                         help='use mathscinet to update bibtex entries (less powerful)')
+
+    parser.add_argument('-q','--quietness',action='count', default=2,
+                        help='printer fewer messages')
+    parser.add_argument('-r','--replace',action='store_true', default=False,
+                        help='replace existing bibtex file')
 
     # suppress printing of these two options
     parser.add_argument('--version',action='version', version=bibupdate_version, help=argparse.SUPPRESS)
@@ -332,12 +368,12 @@ def process_options():
 
     # define debugging, verbose and warning functions
     if options.debugging:
-        options.quietness=3
-        debugging=print_to_user
+        options.quietness=2
+        debugging=bib_print
     else:
         debugging=lambda *arg: None
-    verbose=print_to_user if options.quietness==2 else lambda *arg: None
-    warning=print_to_user if options.quietness>=1 else lambda *arg: None
+    verbose=bib_print if options.quietness==2 else lambda *arg: None
+    warning=bib_print if options.quietness>=1 else lambda *arg: None
 
     # a shortcut function for replacing fonts
     massage_fonts=font_replace if options.font_replace else lambda ti: ti
@@ -350,25 +386,36 @@ def main():
 
     # now we are ready to open the existing BibTeX file and start working
     try:
-        bibfile=open(options.bibtexfile,'r')
+        bibfile=open(options.bibtexfile.name,'r')
         papers=bibfile.read()
         bibfile.close()
         asterisk=papers.index('@')
     except IOError,e:
-        print_to_user('%s: unable to open bibtex file %s' % (options.prog, options.bibtexfile))
-        sys.exit(2)
+        bib_error('unable to open bibtex file %s' % options.bibtexfile.name)
 
     # if we are checking for errors then we check EVERYTHING but, in this case,
     # we don't need to create a new bibtex file
-    if options.report_errors:
+    if options.check_all:
         options.check_all=True
     else:
-        # open the replacement BibTeX file
+        if options.replace:
+            # copy original file to filename+'.bak' and write updates to filename
+            try:
+                shutil.copyfile(options.filename.name,options.filename.name+'.bak')
+                newfile=options.filename.name
+            except IOError,e:
+                biberror('unable to create backup file')
+        else:
+            # write updates to 'updated_'+filename
+            dir=dirname(options.bibtexfile.name)
+            base=basename(options.bibtexfile.name)
+            newfile='updated_%s' % base if dir=='' else r'%s/updated_%s' %(dir,base)
+
+        # open newfile
         try:
-            newbibfile=open('updated_'+options.bibtexfile,'w')
+            newbibfile=open(newfile,'w')
         except IOError,e:
-            print_to_user('%s: unable to open new bibtex file new%s' % (prog, options.bibtexfile))
-            sys.exit(2)
+            bib_error('unable to open new bibtex file %s' % newfile)
 
         newbibfile.write(papers[:asterisk]) # copy everything up to the first @
 
@@ -381,10 +428,10 @@ def main():
                 getattr(bt, options.lookup)()  # call lookup program
 
         # now write the new (and hopefully) improved entry
-        if not options.report_errors:
+        if not options.check_all:
             newbibfile.write(bt.str()+'\n\n')
 
-    if not options.report_errors:
+    if not options.check_all:
         newbibfile.close()
 
 ##############################################################################
