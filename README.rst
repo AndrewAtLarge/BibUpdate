@@ -217,7 +217,8 @@ To do
 
 AUTHOR
 ------
-Copyright (C) 2012-14 Andrew Mathas
+Andrew_Mathas_
+Copyright (C) 2012-14 
 GNU General Public License, Version 3, 29 June 2007
 
 This program is free software: you can redistribute it and/or modify it under
@@ -229,6 +230,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
+.. _Andrew_Mathas: http://www.maths.usyd.edu.au/u/mathas/
 .. _BibTeX: http://www.bibtex.org/
 .. _GPL: http://www.gnu.org/licenses/gpl.html
 .. _LaTeX: http://en.wikipedia.org/wiki/LaTeX
