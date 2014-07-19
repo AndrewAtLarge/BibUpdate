@@ -218,6 +218,7 @@ To do
 AUTHOR
 ------
 Andrew_Mathas_
+
 Copyright (C) 2012-14 
 GNU General Public License, Version 3, 29 June 2007
 
