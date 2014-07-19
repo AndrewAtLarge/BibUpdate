@@ -219,7 +219,8 @@ AUTHOR
 ------
 `Andrew Mathas`_
 
-Copyright (C) 2012-14 
+bibupdate_ Version 1.1. Copyright (C) 2012-14 
+
 GNU General Public License, Version 3, 29 June 2007
 
 This program is free software: you can redistribute it and/or modify it under
