@@ -15,10 +15,9 @@ usage: bibupdate [-a] [-c] [-f] [-i IGNORE] [-l LOG] [-m | -M] [-q] [-r] <bibtex
 
 Update and validate BibTeX files
 
-positional arguments:
   bibtexfile            BibTeX file to update
 
-optional arguments:
+**Optional arguments**
   -a, --all             update or validate ALL BibTeX entries
   -c, --check_all       check all bibtex entries against a database
   -f, --font_replace    do NOT replace fonts \Bbb, \germ and \scr
