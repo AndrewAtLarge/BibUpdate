@@ -37,6 +37,7 @@ bibupdate_version=r'''
 import argparse, re, sys, urllib
 from collections import OrderedDict
 from fuzzywuzzy import fuzz
+from itertools import chain
 from os.path import dirname, basename
 
 # global options, used mainly for printing
@@ -336,12 +337,12 @@ def process_options():
 
     parser.add_argument('-a','--all',action='store_true',default=False,dest='check_all',
                         help='update or validate ALL BibTeX entries')
-    parser.add_argument('-c','--check_all',action='store_true', default=False,
+    parser.add_argument('-c','--check-all',action='store_true', default=False,
                         help='check all bibtex entries against a database')
     parser.add_argument('-f','--font_replace',action='store_false', default=False,
                         help='do NOT replace fonts \Bbb, \germ and \scr')
-    parser.add_argument('-i','--ignore',type=str,default='coden mrreviewer fjournal issn',
-                        help='a string of bibtex fields to ignore')
+    parser.add_argument('-i','--ignored-fields',type=str,default=['coden','mrreviewer','fjournal','issn'],
+                        action='append',help='a string of bibtex fields to ignore')
     parser.add_argument('-l','--log', default=sys.stdout, type=argparse.FileType('w'),
                         help='log output to file (defaults to stdout)')
 
@@ -350,7 +351,7 @@ def process_options():
     lookup.add_argument('-m','--mrlookup',action='store_const',const='mrlookup',dest='lookup',
                         default='mrlookup',help='use mrlookup to update bibtex entries (default)')
     lookup.add_argument('-M','--mathscinet',action='store_const',const='mathscinet',dest='lookup',
-                        help='use mathscinet to update bibtex entries (less powerful)')
+                        help='use mathscinet to update bibtex entries (less flexible)')
 
     parser.add_argument('-q','--quietness',action='count', default=2,
                         help='printer fewer messages')
@@ -364,7 +365,9 @@ def process_options():
     # parse the options
     options = parser.parse_args()
     options.prog=parser.prog
-    options.ignored_fields=[field for field in options.ignore.split()]
+    if len(options.ignored_fields)>4:
+        # if any fields were added then don't ignore the first 4 fields.
+        options.ignored_fields=list(chain.from_iterable([i.split() for i in options.ignored_fields[4:]]))
 
     # define debugging, verbose and warning functions
     if options.debugging:
