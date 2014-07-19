@@ -188,6 +188,22 @@ is not so obvious.
   Replace the existing BibTeX_ file with the updated file. A backup version of
   the original BibTeX_ is made with a .bak extension.
 
+BibTeX fields
+-------------
+
+bibupdate_ read the entries in a BibTeX_ using a series of python regular
+expressions. To make this easier we assume that the values of all fields are
+enclosed in braces, whereas BibTeX_ is slightly more flexible than this.
+For example, bibupdate_ will correctly recognise the YEAR from::
+
+    YEAR = {1991},
+
+however, it will fail to determine the YEAR when the braces are omitted::
+
+    YEAR = 1991,
+
+If you maintain your BibTeX_ database "by hand" then this might be a problem for
+you. If, however, you use a program JabRef this should not be an issue.
 
 Installation
 ============
@@ -206,7 +222,7 @@ There are two installation routes.
 
 Context
 -------
-BibTeX_ is used by the LaTeX_ community to maintain publication databases.
+BibTeX_ is widely used by the LaTeX_ community to maintain publication databases.
 
 To do
 -----
