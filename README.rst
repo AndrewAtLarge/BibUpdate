@@ -2,7 +2,7 @@
 bibupdate
 =========
 
-**Usage:** bibupdate_ <file.bib>
+**Usage:** bibupdate_ <bibtexfile>
 
 This is a command line tool for updating the entries in a BibTeX_ file using
 mrlookup_. By default bibupdate_ tries to update the entry for each paper
