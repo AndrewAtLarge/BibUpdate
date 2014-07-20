@@ -28,7 +28,7 @@ disable future checking of an entry by giving it an empty **mrnumber** field).
 
 **Note:** 
 As described below, you should check the new file for errors before deleting the
-original version of your bibtex_ file.
+original version of your BibTeX_ file.
 
 By default, bibupdate_ does not change your original database file. Instead, it creates a
 new file with the name *updated_file.bib*, if your original file was *file.bib*.
@@ -223,7 +223,7 @@ Installation
 ============
 
 You need to have Python_ installed. In principle, this program should work on
-any system that supports Python_, however, I can only promise that it will work
+any system that supports Python_, however, I only promise that it will work
 on an up-to-date mac or Linux system. In the event that it does not install I
 may not be able to help you as I will not have access to your system.
 
