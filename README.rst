@@ -20,7 +20,7 @@ disable future checking of an entry by giving it an empty **mrnumber** field).
   -i IGNORE, --ignored-fields IGNORE
                         a string of bibtex fields to ignore
   -l LOG, --log LOG     log output to file (defaults to stdout)
-  -q, --quietness         print fewer messages
+  -q, --quietness       print fewer messages
   -r  --replace         replace existing bibtex file
 
   -m, --mrlookup        use mrlookup to update bibtex entries (default)
