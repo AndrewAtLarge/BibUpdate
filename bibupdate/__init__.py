@@ -149,8 +149,8 @@ class Bibtex(OrderedDict):
     # signs because otherwise we are unable to cope with = inside a bibtex field.
     keys_and_vals=re.compile(r'\s*=\s*')
 
-    # Regular expression to extract pairs of keys and values from a bibtex string. THe
-    # syntax here is very lax: we assume that bibtex fields do not contain the string '=\s+{'.
+    # Regular expression to extract pairs of keys and values from a bibtex string. The
+    # syntax here is very lax: we assume that bibtex fields do not contain the string '={'.
     # From the AMS the format of a bibtex entry is much more rigid but we cannot
     # assume that an arbitrary bibtex file will respect the AMS conventions.
     bibtex_keys=re.compile(r'([A-Za-z]+)=\{((?:[^=]|=(?!\{))+)\},?$', re.MULTILINE|re.DOTALL)
@@ -163,6 +163,7 @@ class Bibtex(OrderedDict):
     # existence of the comma being the crucial test because we want to allow
     # compound surnames like De Morgan.
     author=re.compile(r'(?P<Au>[\w\s\\\-\'"{}]+),\s[A-Z]|[\w\s\\\-\'"{}]+\s(?P<au>[\w\s\\\-\'"{}]+)',re.DOTALL)
+
     def __init__(self, bib_string):
         """
         Given a string <bib_string> that contains a bibtex entry return the corresponding Bibtex class.
@@ -180,7 +181,11 @@ class Bibtex(OrderedDict):
             keys_and_vals=self.keys_and_vals.sub('=',entry.group('keys_and_vals'))   # remove spaces around = 
             for (key,val) in self.bibtex_keys.findall(keys_and_vals):
                 val=' '.join(val.split()) # remove any internal space from val
-                self[key.lower()]=massage_fonts(val)
+                lkey=key.lower()
+                if lkey=='title':
+                    self[lkey]=massage_fonts(val)
+                else:
+                    self[lkey]=val
 
     def str(self):
         r"""
