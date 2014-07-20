@@ -212,7 +212,7 @@ There are a small number of cases that I know of where bibupdate_ fails to
 correctly identify papers that are listed in MathSciNet_. These failure occur 
 for the following reasons:
 
-* Apostophes: Searching for a title containing, for example, "James's Conjecture" 
+* Apostrophes: Searching for a title containing, for example, "James's Conjecture" 
   confuses mrlookup_.
 * Accents in authors: Generally accents are not a problem because the AMs is
   LaTeX_ aware, however, issues arise when there are multiple versions of authors
