@@ -132,6 +132,7 @@ is not so obvious.
   Specify a log filename to use for output.
 
 -m --mrlookup               Use mrlookup to update bibtex entries (default)
+
 -M --mathscinet             Use mathscinet to update bibtex entries
 
   By default mrlookup_ is used to update the BibTeX_ entries in the database.
