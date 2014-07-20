@@ -26,10 +26,14 @@ disable future checking of an entry by giving it an empty **mrnumber** field).
   -m, --mrlookup        use mrlookup to update bibtex entries (default)
   -M, --mathscinet      use mathscinet to update bibtex entries (less flexible)
 
-**Note:** bibupdate_ does not change your original database file. Instead, it creates a
-new file with the name *updated_file.bib*, if your original file was *file.bib*.
+**Note:** 
 As described below, you should check the new file for errors before deleting the
 original version of your bibtex_ file.
+
+By default, bibupdate_ does not change your original database file. Instead, it creates a
+new file with the name *updated_file.bib*, if your original file was *file.bib*.
+It is also possible to have it replace your current file (use carefully!), or to
+specify a new file name.
 
 BibTeX_ is widely used by the LaTeX_ community to maintain publication databases.
 This script attempts to add missing fields to the papers in a BibTeX_ database
