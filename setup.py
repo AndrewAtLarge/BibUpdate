@@ -7,7 +7,7 @@ setup(name='bibupdate',
       keywords = 'bibtex, mrlookup, MathSciNet, latex',
 
       author='Andrew Mathas',
-      author_email='andrew.mathas@sydney.edu.au',
+      author_email='andrew.mathas@gmail.com',
       url='https://bitbucket.org/aparticle/bibupdate',
 
       packages=['bibupdate'],
