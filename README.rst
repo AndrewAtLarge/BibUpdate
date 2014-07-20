@@ -4,7 +4,7 @@ bibupdate
 
 **Usage**: 
 
-bibupdate [-a] [-c] [-f] [-i IGNORE] [-l LOG] [-m | -M] [-q] [-r] <bibtexfile> [ouptut]
+bibupdate [-a] [-c] [-f] [-i IGNORE] [-l LOG] [-m | -M] [-q] [-r] <bibtexfile> [output]
 
 This is a command line tool for updating the entries in a BibTeX_ file using
 mrlookup_. By default bibupdate_ tries to update the entry for each paper
