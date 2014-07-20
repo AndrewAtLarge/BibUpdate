@@ -26,7 +26,7 @@ Update and validate BibTeX files
   -i IGNORE, --ignored-fields IGNORE
                         a string of bibtex fields to ignore
   -l LOG, --log LOG     log output to file (defaults to stdout)
-  -q, --quieter         print fewer messages
+  -q, --quietness         print fewer messages
   -r  --replace         replace existing bibtex file
 
   -m, --mrlookup        use mrlookup to update bibtex entries (default)
@@ -144,7 +144,7 @@ is not so obvious.
   using the **mrnumber** field (so this option only does something if combined
   with the -all option).
 
--q, --quieter               Print fewer messages
+-q, --quietness               Print fewer messages
 
   There are three levels of verbosity in how bibupdate_ describes the changes that
   it is making. These are determined by the `q` option as follows::
@@ -189,15 +189,16 @@ is not so obvious.
 
   Replace the existing BibTeX_ file with the updated file. A backup version of
   the original BibTeX_ is made with a .bak extension. it is also possible to
-  specify the output filename as the lst argument to bibupdate.
+  specify the output filename as the last argument to bibupdate.
 
 BibTeX fields
 -------------
 
-bibupdate_ read the entries in a BibTeX_ using a series of python regular
-expressions. To make this easier we assume that the values of all fields are
-enclosed in braces, whereas BibTeX_ is slightly more flexible than this.
-For example, bibupdate_ will correctly recognise the YEAR from::
+bibupdate_ reads the entries in a BibTeX_ using a series of python regular
+expressions. To do this bibupdate_ only supports a more restrictive format for
+specifying the values of fields: they must always be enclosed in braces.
+(BibTeX_ is slightly more flexible as it will also accepts "words").  For
+example, bibupdate_ will correctly recognise the YEAR from::
 
     YEAR = {1991},
 
@@ -211,9 +212,14 @@ you. If, however, you use a program like JabRef this should not be an issue.
 There are a small number of cases that I know of where bibupdate_ fails to
 correctly identify papers that are listed in MathSciNet_. These failure occur 
 for the following reasons:
-* Punctuation in titles can cause problems. For example, it does not seem to be
-  possible to search for a title containing "James's Conjecture" using mrlookup_.
-* Accents in authors:
+* Apostophes: Searching for a title containing, for example, "James's Conjecture" 
+  confuses mrlookup_.
+* Accents in authors: Generally accents are not a problem because the AMs is
+  LaTeX_ aware, however, issues arise when there are multiple versions of authors
+  names.
+* Pages numbers: electronic journals, in particular, often have strange page
+  numbers (for example "Art. ID rnm032, 24"). Occassionally MathReviews for
+  closely related articles are combined.
 
 Installation
 ============
