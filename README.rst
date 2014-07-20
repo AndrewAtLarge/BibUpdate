@@ -104,9 +104,9 @@ Options and their defaults
   specifications are automatically changed to the following more LaTeX_ friendly
   fonts::
 
-        - \\Bbb X  --> \\mathbb{X}
-        - \\scr X  --> \\mathscr{X}
-        - \\germ X --> \\mathfrak{X}
+        - \Bbb X  --> \mathbb{X}
+        - \scr X  --> \mathscr{X}
+        - \germ X --> \mathfrak{X}
 
   The -f option *disables* these substitutions.
 
