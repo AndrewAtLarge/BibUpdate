@@ -226,9 +226,8 @@ Installation
 
 You need to have Python_ installed. In principle, this program should work on
 any system that supports Python_, however, I can only promise that it will work
-on an up-to-date mac system. Linux should also be OK. In the event that it does
-not install I may not be able to help you as I will not have access to your
-system.
+on an up-to-date mac or Linux system. In the event that it does not install I
+may not be able to help you as I will not have access to your system.
 
 There are two installation routes.
 
@@ -240,6 +239,9 @@ There are two installation routes.
    run *pip* or *easy_install*::
 
       pip setup.py install
+
+Instead of pip, you should also be able to use easy_install. The program should
+run on python 2.7 and 2.8...I haven't tried python3.
 
 Support
 =======
