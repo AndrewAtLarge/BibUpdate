@@ -2,7 +2,9 @@
 bibupdate
 =========
 
-**Usage:** bibupdate_ <bibtexfile>
+**Usage**: 
+
+bibupdate [-a] [-c] [-f] [-i IGNORE] [-l LOG] [-m | -M] [-q] [-r] <bibtexfile> [ouptut]
 
 This is a command line tool for updating the entries in a BibTeX_ file using
 mrlookup_. By default bibupdate_ tries to update the entry for each paper
@@ -11,14 +13,6 @@ disable future checking of an entry by giving it an empty **mrnumber** field).
 
 **Options**::
 
-usage: bibupdate [-a] [-c] [-f] [-i IGNORE] [-l LOG] [-m | -M] [-q] [-r] <bibtexfile> [ouptut]
-
-Update and validate BibTeX files
-
-  bibtexfile            BibTeX file to update
-  outputfile            output file (defaults to updated_<bibtexfile>)
-
-**Optional arguments**
   -a, --all             update or validate ALL BibTeX entries
   -c, --check_all       check all bibtex entries against a database
   -f, --font_replace    do NOT replace fonts \Bbb, \germ and \scr
