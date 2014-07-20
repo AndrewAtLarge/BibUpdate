@@ -11,11 +11,12 @@ disable future checking of an entry by giving it an empty **mrnumber** field).
 
 **Options**::
 
-usage: bibupdate [-a] [-c] [-f] [-i IGNORE] [-l LOG] [-m | -M] [-q] [-r] <bibtexfile>
+usage: bibupdate [-a] [-c] [-f] [-i IGNORE] [-l LOG] [-m | -M] [-q] [-r] <bibtexfile> [ouptut]
 
 Update and validate BibTeX files
 
   bibtexfile            BibTeX file to update
+  outputfile            output file (defaults to updated_<bibtexfile>)
 
 **Optional arguments**
   -a, --all             update or validate ALL BibTeX entries
@@ -36,6 +37,7 @@ new file with the name *updated_file.bib*, if your original file was *file.bib*.
 As described below, you should check the new file for errors before deleting the
 original version of your bibtex_ file.
 
+BibTeX_ is widely used by the LaTeX_ community to maintain publication databases.
 This script attempts to add missing fields to the papers in a BibTeX_ database
 file by querying mrlookup_ and getting the missing information from there. This
 is not completely routine because to search on mrlookup_ you need either the
@@ -181,12 +183,13 @@ is not so obvious.
   In *warning mode*, with the -w option,  you are just "warned" when changes are
   being made to an entry. That is, when papers are found (with changes) or when
   they are missed and bibupdate_ thinks that they are not preprints. In *quiet
-  mode*, with the -q option, the program only reports when something goes wrong.
+  mode*, with the -qq option, the program only reports when something goes wrong.
 
--r  --replace         replace existing bibtex file
+-r  --replace         replace the existing bibtex file with the updated version
 
   Replace the existing BibTeX_ file with the updated file. A backup version of
-  the original BibTeX_ is made with a .bak extension.
+  the original BibTeX_ is made with a .bak extension. it is also possible to
+  specify the output filename as the lst argument to bibupdate.
 
 BibTeX fields
 -------------
@@ -203,10 +206,23 @@ however, it will fail to determine the YEAR when the braces are omitted::
     YEAR = 1991,
 
 If you maintain your BibTeX_ database "by hand" then this might be a problem for
-you. If, however, you use a program JabRef this should not be an issue.
+you. If, however, you use a program like JabRef this should not be an issue.
+
+There are a small number of cases that I know of where bibupdate_ fails to
+correctly identify papers that are listed in MathSciNet_. These failure occur 
+for the following reasons:
+* Punctuation in titles can cause problems. For example, it does not seem to be
+  possible to search for a title containing "James's Conjecture" using mrlookup_.
+* Accents in authors:
 
 Installation
 ============
+
+You need to have Python_ installed. In principle, this program should work on
+any system that supports Python_, however, I can only promise that it will work
+on an up-to-date mac system. Linux should also be OK. In the event that it does
+not install I may not be able to help you as I will not have access to your
+system.
 
 There are two installation routes.
 
@@ -219,20 +235,26 @@ There are two installation routes.
 
       pip setup.py install
 
+Support
+=======
 
-Context
--------
-BibTeX_ is widely used by the LaTeX_ community to maintain publication databases.
+This program is being made available primarily on the basis that it might be
+useful to others. I wrote the program in my spare time and I will support it in
+my spare time, to the extent that I will fix what I consider to be serious
+problems and I may implement feature requests. Ultimately, however, my family,
+research, teaching and administrative duties will have priority.
 
 To do
------
+=====
+
 - Implement more intelligent searches using MathSciNet_.
 - Interface to the arXiv_? In principle, this is easy to do although,
   ultimately, it would probably not work because the arXiv_ blocks frequent
   requests from the same IP address in order to discourage robots.
 
 AUTHOR
-------
+======
+
 `Andrew Mathas`_
 
 bibupdate_ Version 1.1. Copyright (C) 2012-14 
@@ -249,12 +271,13 @@ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 .. _`Andrew Mathas`: http://www.maths.usyd.edu.au/u/mathas/
+.. _arXiv: http://arxiv.org/
 .. _BibTeX: http://www.bibtex.org/
+.. _bibupdate: https://bitbucket.org/aparticle/bibupdate
+.. _download: http://bitbucket.org/AndrewsBucket/bibupdate/downloads/
 .. _GPL: http://www.gnu.org/licenses/gpl.html
+.. _hyperref: http://www.ctan.org/pkg/hyperref
 .. _LaTeX: http://en.wikipedia.org/wiki/LaTeX
 .. _MathSciNet: http://www.ams.org/mathscinet/
-.. _arXiv: http://arxiv.org/
-.. _bibupdate: https://bitbucket.org/aparticle/bibupdate
-.. _hyperref: http://www.ctan.org/pkg/hyperref
 .. _mrlookup: http://www.ams.org/mrlookup
-.. _download: http://bitbucket.org/AndrewsBucket/bibupdate/downloads/
+.. _Python: https://www.python.org/

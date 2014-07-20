@@ -334,6 +334,7 @@ def process_options():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('bibtexfile',type=argparse.FileType('r'),help='bibtex file to update')
+    parser.add_argument('outputfile',nargs='?',type=argparse.FileType('w'),help='output file')
 
     parser.add_argument('-a','--all',action='store_true',default=False,dest='check_all',
                         help='update or validate ALL BibTeX entries')
@@ -367,7 +368,7 @@ def process_options():
     options.prog=parser.prog
     if len(options.ignored_fields)>4:
         # if any fields were added then don't ignore the first 4 fields.
-        options.ignored_fields=list(chain.from_iterable([i.split() for i in options.ignored_fields[4:]]))
+        options.ignored_fields=list(chain.from_iterable([i.lower().split() for i in options.ignored_fields[4:]]))
 
     # define debugging, verbose and warning functions
     if options.debugging:
@@ -408,11 +409,13 @@ def main():
                 newfile=options.filename.name
             except IOError,e:
                 biberror('unable to create backup file')
-        else:
+        elif options.outputfile is None:
             # write updates to 'updated_'+filename
             dir=dirname(options.bibtexfile.name)
             base=basename(options.bibtexfile.name)
             newfile='updated_%s' % base if dir=='' else r'%s/updated_%s' %(dir,base)
+        else:
+            newfile=options.outputfile.name
 
         # open newfile
         try:
