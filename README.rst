@@ -4,12 +4,12 @@ bibupdate
 
 **Usage**: 
 
-bibupdate [-a] [-c] [-f] [-i IGNORE] [-l LOG] [-m | -M] [-q] [-r] <bibtexfile> [output]
+bibupdate [-a] [-c] [-f] [-i IGNORE] [-l LOG] [-m | -M] [-q] [-r] <bibtexfile> [output_file]
 
 This is a command line tool for updating the entries in a BibTeX_ file using
 mrlookup_. By default bibupdate_ tries to update the entry for each paper
-in the BibTeX_ file unless the entry already has an **mrnumber** field (you can
-disable future checking of an entry by giving it an empty **mrnumber** field).
+in the BibTeX_ file unless the entry already has an ``mrnumber`` field (you can
+disable future checking of an entry by giving it an empty ``mrnumber`` field).
 
 **Options**::
 
@@ -19,7 +19,7 @@ disable future checking of an entry by giving it an empty **mrnumber** field).
   -h, --help            show this help message and exit
   -i IGNORE, --ignored-fields IGNORE
                         a string of bibtex fields to ignore
-  -l LOG, --log LOG     log output to file (defaults to stdout)
+  -l LOG, --log LOG     log messages to specified file (defaults to stdout)
   -q, --quietness       print fewer messages
   -r  --replace         replace existing bibtex file
 
@@ -50,7 +50,7 @@ use the publication year and its page numbers. To search on mrlookup_ we:
 
 If there is a unique match from mrlookup_ then bibupdate_ replaces all of the
 current entries with those from mrlookup_, except for the citation key. The
-values of any fields that are not specified by mrlookup_, such as eprint fields,
+values of any fields that are not specified by mrlookup_, such as ``eprint`` fields,
 are retained. By default, a message is printed whenever existing fields in the
 database are changed. If the title of the retrieved paper does not (fuzzily)
 match that of the original article then the entry is NOT updated and a warning
@@ -61,7 +61,7 @@ to the same paper that the original entry referred to there is always a (small?)
 chance the new entry corresponds to an entirely different paper.  In my
 experience this happens rarely, and mostly with unpublished manuscripts. In any
 case, before you delete your original BibTeX_ file *you are strongly advised to
-check the updated file BibTeX_ file carefully for errors!*
+check the updated file BibTeX file carefully for errors!*
 
 To help with comparing the updated entries the program prints a detailed list of
 all changes that are made to existing BibTeX_ entries (the new fields added to
@@ -80,7 +80,7 @@ when the papers appear in MathSciNet_ after they are published.
 As bibupdate_ calls mrlookup_ this program will only be useful if you have
 papers in your database that are listed in MathSciNet_. As described below it is
 also possible to call MathSciNet_ directly, however, this is less flexible
-because the *mrnumber* field for each paper is required.
+because the ``mrnumber`` field for each paper is required.
 
 Options and their defaults
 --------------------------
@@ -88,7 +88,7 @@ Options and their defaults
 -a, --all  Update or validate ALL BibTeX entries
 
   By default bibupdate_ only checks each BibTeX_ entry with the mrlookup
-  database if the entry does *not* have an **mrnumber** field. With this switch
+  database if the entry does *not* have an ``mrnumber`` field. With this switch
   all entries are checked and updated.
 
 -c --check_all  Check all bibtex entries against a database
@@ -138,7 +138,7 @@ Options and their defaults
   Mathematical Society. A second advantage is the more flexible searching is
   possible when mrlookup_ is used. It is also possible to update BibTeX_
   entries using MathSciNet_, however, these searches are currently only possible
-  using the **mrnumber** field (so this option only does something if combined
+  using the ``mrnumber`` field (so this option only does something if combined
   with the --all option or the -check-all-option).
 
 -q, --quietness  Print fewer messages

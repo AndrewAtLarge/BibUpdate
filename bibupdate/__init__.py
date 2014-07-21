@@ -359,7 +359,7 @@ def process_options():
     parser.add_argument('-i','--ignored-fields',type=str,default=['coden','mrreviewer','fjournal','issn'],
                         action='append',help='a string of bibtex fields to ignore')
     parser.add_argument('-l','--log', default=sys.stdout, type=argparse.FileType('w'),
-                        help='log output to file (defaults to stdout)')
+                        help='log mesages to specified file (defaults to stdout)')
 
     # add a mutually exclusive switch for choosing between mrlookup and mathscinet
     lookup=parser.add_mutually_exclusive_group()
