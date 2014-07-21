@@ -66,14 +66,21 @@ def bib_error(*args):
         sys.stderr.write(a+'\n')
     sys.exit(2)
 
-# exit gracefully fter control-C
+# exit gracefully after control-C
 OriginalExceptHook = sys.excepthook
 def NewExceptHook(type, value, traceback):
+    r"""
+    Exit cleanly when program is killed.
+    """
     if type == KeyboardInterrupt:
         bib_error('program killed. Exiting...')
     else:
         OriginalExceptHook(type, value, traceback)
+
+# ...and a hook to grab the exception
 sys.excepthook = NewExceptHook
+
+##########################################################
 
 # define a regular expression for extracting papers from BibTeX file
 bibtex_entry=re.compile('(@\s*[A-Za-z]*\s*{[^@]*})\s*',re.DOTALL)
@@ -121,14 +128,12 @@ def good_match(one,two):
 
 class Bibtex(OrderedDict):
     r"""
-    The bibtex class holds all of the data for one bibtex entry for a paper.  It
-    is called with a string <bib_string> that contains a bibtex entry and it
-    returns essentially a dictionary with whistles for the bibtex entry.
-
-    The class is called with a string which is known to hold a bibtex entry and
-    the class automatically extracts and stores this information.  As the bibtex
-    file is a flat text file, to extract the data from it we use a collection of
-    regular expressions which pull out the data key by key.
+    The bibtex class holds all of the data for a bibtex entry for a manuscript.
+    It is called with a string <bib_string> that contains a bibtex entry and it
+    returns a dictionary with whistles for the bibtex entry together with some
+    methods for updating and printing the entry. As the bibtex file is a flat
+    text file, to extract the data from it we use a collection of regular
+    expressions which pull out the data key by key.
 
     The class contains mrlookup() and mathscinet() methods that attempt to
     update the bibtex entry by searching on the corresponding AMS databases for
@@ -149,11 +154,14 @@ class Bibtex(OrderedDict):
     # signs because otherwise we are unable to cope with = inside a bibtex field.
     keys_and_vals=re.compile(r'\s*=\s*')
 
-    # Regular expression to extract pairs of keys and values from a bibtex string. The
-    # syntax here is very lax: we assume that bibtex fields do not contain the string '={'.
-    # From the AMS the format of a bibtex entry is much more rigid but we cannot
-    # assume that an arbitrary bibtex file will respect the AMS conventions.
-    bibtex_keys=re.compile(r'([A-Za-z]+)=\{((?:[^=]|=(?!\{))+)\},?$', re.MULTILINE|re.DOTALL)
+    # Regular expression to extract pairs of keys and values from a bibtex
+    # string. The syntax here is very lax: we assume that bibtex fields do not
+    # contain the string '={'.  From the AMS the format of a bibtex entry is
+    # much more rigid but we cannot assume that an arbitrary bibtex file will
+    # respect the AMS conventions.  There is a small complication in that we
+    # allow the value of each field to either be enclosed in braces or to be a
+    # single word.
+    bibtex_keys=re.compile(r'([A-Za-z]+)=(?:\{((?:[^=]|=(?!\{))+)\}|(\w+)),?$', re.MULTILINE|re.DOTALL)
 
     # Regular expression for extracting page numbers: <first page>-*<last page>
     # or simply <page>.
@@ -179,15 +187,16 @@ class Bibtex(OrderedDict):
             self.pub_type=entry.group('pub_type').strip().lower()
             self.cite_key=entry.group('cite_key').strip()
             keys_and_vals=self.keys_and_vals.sub('=',entry.group('keys_and_vals'))   # remove spaces around = 
-            for (key,val) in self.bibtex_keys.findall(keys_and_vals):
+            for (key,val,word) in self.bibtex_keys.findall(keys_and_vals):
+                if val=='': val=word      # val matches {value} whereas word matches word
                 val=' '.join(val.split()) # remove any internal space from val
-                lkey=key.lower()
+                lkey=key.lower()          # keys always in lower case
                 if lkey=='title':
                     self[lkey]=massage_fonts(val)
                 else:
                     self[lkey]=val
 
-    def str(self):
+    def __str__(self):
         r"""
         Return a string for printing the bibtex entry.
         """
@@ -272,7 +281,7 @@ class Bibtex(OrderedDict):
         finding the correct search parameters.
         """
         # only check mrlookup for books or articles for which we don't already have an mrnumber field
-        if not options.check_all and (self.has_key('mrnumber')
+        if not options.all and (self.has_key('mrnumber')
            or self.pub_type not in ['book','article','inproceedings','incollection']):
             return
 
@@ -325,7 +334,7 @@ class Bibtex(OrderedDict):
         Use MathSciNet to check/update the entry using the mrnumber field, if it
         exsists.
         """
-        if self.has_key('mrnumber'):
+        if options.all or self.has_key('mrnumber'):
             search={'fmt': 'bibtex', 'pg1': 'MR', 's1': self['mrnumber'].split()[0]}
             self.update_entry('http://www.ams.org/mathscinet/search/publications.html', search, False)
 
@@ -341,7 +350,7 @@ def process_options():
     parser.add_argument('bibtexfile',type=argparse.FileType('r'),help='bibtex file to update')
     parser.add_argument('outputfile',nargs='?',type=argparse.FileType('w'),help='output file')
 
-    parser.add_argument('-a','--all',action='store_true',default=False,dest='check_all',
+    parser.add_argument('-a','--all',action='store_true',default=False,
                         help='update or validate ALL BibTeX entries')
     parser.add_argument('-c','--check-all',action='store_true', default=False,
                         help='check all bibtex entries against a database')
@@ -374,6 +383,10 @@ def process_options():
     if len(options.ignored_fields)>4:
         # if any fields were added then don't ignore the first 4 fields.
         options.ignored_fields=list(chain.from_iterable([i.lower().split() for i in options.ignored_fields[4:]]))
+
+    # if check_all==True then we want to check everything
+    if options.check_all:
+        options.all=True
 
     # define debugging, verbose and warning functions
     if options.debugging:
@@ -422,6 +435,7 @@ def main():
         else:
             newfile=options.outputfile.name
 
+        print 'Writing to %s' % newfile
         # open newfile
         try:
             newbibfile=open(newfile,'w')
@@ -440,7 +454,7 @@ def main():
 
         # now write the new (and hopefully) improved entry
         if not options.check_all:
-            newbibfile.write(bt.str()+'\n\n')
+            newbibfile.write('%s\n\n' % bt)
 
     if not options.check_all:
         newbibfile.close()

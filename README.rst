@@ -188,27 +188,12 @@ Options and their defaults
   the original BibTeX_ is made with a .bak extension. it is also possible to
   specify the output filename as the last argument to bibupdate.
 
-BibTeX fields
--------------
+Known issues
+------------
 
-bibupdate_ reads the entries in a BibTeX_ using a series of python regular
-expressions. To do this bibupdate_ requries that the *values* of the each field
-is always enclosed in braces.  (BibTeX_ is slightly more flexible in that it
-also accepts a single "word" not necessarily enclosed in braces).  For example,
-bibupdate_ will correctly recognise the YEAR from::
-
-    YEAR = {1991},
-
-however, it will fail to determine the YEAR when the braces are omitted::
-
-    YEAR = 1991,
-
-If you maintain your BibTeX_ database "by hand" then this might be a problem for
-you. If, however, you use a program like *JabRef* this should not be an issue.
-
-There are a small number of cases that I know of where bibupdate_ fails to
-correctly identify papers that are listed in MathSciNet_. These failures occur 
-for the following reasons:
+There are a small number of cases where bibupdate_ fails to correctly identify
+papers that are listed in MathSciNet_. These failures occur for the following
+reasons:
 
 * Apostrophes: Searching for a title that contains, for example, "James's Conjecture" 
   confuses mrlookup_.
@@ -219,8 +204,11 @@ for the following reasons:
 * Pages numbers: electronic journals, in particular, often have strange page
   numbers (for example "Art. ID rnm032, 24"). bibupdate_ assumes that page
   numbers are always given in the format like 4--42.
-* Occasionally MathReviews for closely related articles are combined, making
-  difficult to search for.
+* Occasionally MathReviews combines two or more closely related articles. This
+  makes it difficult to search for them.
+
+All of these problems are due to idiosyncrasies with mrlookup_ so there is not
+much that we can do about them.
 
 Installation
 ============
