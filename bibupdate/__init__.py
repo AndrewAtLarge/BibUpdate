@@ -161,7 +161,7 @@ class Bibtex(OrderedDict):
     # respect the AMS conventions.  There is a small complication in that we
     # allow the value of each field to either be enclosed in braces or to be a
     # single word.
-    bibtex_keys=re.compile(r'([A-Za-z]+)=(?:\{((?:[^=]|=(?!\{))+)\}|(\w+)),?$', re.MULTILINE|re.DOTALL)
+    bibtex_keys=re.compile(r'([A-Za-z]+)=(?:\{((?:[^=]|=(?!\{))+)\}|(\w+)),?\s*$', re.MULTILINE|re.DOTALL)
 
     # Regular expression for extracting page numbers: <first page>-*<last page>
     # or simply <page>.
@@ -435,7 +435,6 @@ def main():
         else:
             newfile=options.outputfile.name
 
-        print 'Writing to %s' % newfile
         # open newfile
         try:
             newbibfile=open(newfile,'w')
