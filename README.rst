@@ -222,8 +222,6 @@ From the command line type::
 
       pip install bibupdate
 
-      pip setup.py install
-
 Instead of pip, you should also be able to use easy_install. The program should
 run on python 2.7 and 2.8...I haven't tried python3. You can also clone or
 download_ the git repository and work directly with the source.
