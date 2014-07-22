@@ -270,7 +270,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 .. _`Andrew Mathas`: http://www.maths.usyd.edu.au/u/mathas/
 .. _arXiv: http://arxiv.org/
 .. _BibTeX: http://www.bibtex.org/
-.. _bibupdate: https://bitbucket.org/aparticle/bibupdate
+.. _bibupdate: https://bitbucket.org/AndrewsBucket/bibupdate
 .. _download: http://bitbucket.org/AndrewsBucket/bibupdate/downloads/
 .. _GPL: http://www.gnu.org/licenses/gpl.html
 .. _hyperref: http://www.ctan.org/pkg/hyperref

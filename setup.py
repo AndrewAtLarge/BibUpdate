@@ -3,7 +3,7 @@ from setuptools import setup
 import bibupdate
 setup(name='bibupdate',
       version=bibupdate.__version__,
-      description='A script for updating the entries of a bibtex file',
+      description='Automatically update the entries of a bibtex file using mrlookup/MathSciNet',
       keywords = 'bibtex, mrlookup, MathSciNet, latex',
 
       author='Andrew Mathas',
@@ -18,5 +18,13 @@ setup(name='bibupdate',
       long_description=open('README.rst').read(),
       license=bibupdate.__license__,
 
-      zip_safe=False
+      classifiers=[
+          'Development Status :: 5 - Production/Stable',
+          'Environment :: Console',
+          'Intended Audience :: Science/Research',
+          'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+          'Programming Language :: Python :: 2.7',
+          'Topic :: Text Processing :: Markup :: LaTeX',
+          'Topic :: Utilities'
+      ],
 )
