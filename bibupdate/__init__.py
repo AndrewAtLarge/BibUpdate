@@ -348,7 +348,7 @@ def process_options():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('bibtexfile',type=argparse.FileType('r'),help='bibtex file to update')
-    parser.add_argument('outputfile',nargs='?',type=argparse.FileType('w'),help='output file')
+    parser.add_argument('outputfile',nargs='?',type=str,default=None,help='output file')
 
     parser.add_argument('-a','--all',action='store_true',default=False,
                         help='update or validate ALL BibTeX entries')
@@ -433,7 +433,7 @@ def main():
             base=basename(options.bibtexfile.name)
             newfile='updated_%s' % base if dir=='' else r'%s/updated_%s' %(dir,base)
         else:
-            newfile=options.outputfile.name
+            newfile=options.outputfile
 
         # open newfile
         try:
