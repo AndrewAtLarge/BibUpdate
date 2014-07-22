@@ -174,8 +174,8 @@ Options and their defaults
   as specified by your database. Of the three missed entries above, bibupdate_
   thinks that the first and third are preprints (they are not marked with an !)
   and  that the final article should already have been published. With the entry
-  that bibupdate_ found, only the publisher entry was changed so that it
-  includes the city of the publisher.
+  that bibupdate_ found, only the publisher field was changed to include the city 
+  of publication.
 
   In *warning mode*, with the -q option, you are "warned" when changes are being
   made to an entry. That is, when papers are found (with changes) or when they
@@ -238,7 +238,7 @@ research, teaching and administrative duties will have priority.
 To do
 =====
 
-- Implement more intelligent searches using MathSciNet_.
+- More intelligent searches using MathSciNet_.
 - Interface to the arXiv_? In principle, this is easy to do although,
   ultimately, it would probably not work because the arXiv_ blocks frequent
   requests from the same IP address in order to discourage robots.
@@ -248,7 +248,7 @@ AUTHOR
 
 `Andrew Mathas`_
 
-bibupdate_ Version 1.1. Copyright (C) 2012-14 
+bibupdate_ Version 1.2. Copyright (C) 2012-14 
 
 GNU General Public License, Version 3, 29 June 2007
 

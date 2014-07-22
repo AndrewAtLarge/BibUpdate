@@ -1,3 +1,7 @@
+**v1.2** 
+
+* Create backup of output file when it exists and is non-empty
+
 **v1.1** July 2014 -- initial release
 
 * Added limited capability to check database entries against MathSciNet

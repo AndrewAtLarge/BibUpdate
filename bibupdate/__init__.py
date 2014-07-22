@@ -26,7 +26,7 @@ Copyright (C) 2012-14
 """
 
 # Version and license information
-__version__=1.1
+__version__=1.2
 __license__='GNU General Public License, Version 3, 29 June 2007'
 bibupdate_version=r'''
 %(prog)s version {version}: update entries in a bibtex file
@@ -34,11 +34,8 @@ bibupdate_version=r'''
 '''.format(version=__version__, license=__license__)
 
 ######################################################
-import argparse, re, sys, urllib
+import argparse, fuzzywuzzy, os, re, shutil, sys, urllib
 from collections import OrderedDict
-from fuzzywuzzy import fuzz
-from itertools import chain
-from os.path import dirname, basename
 
 # global options, used mainly for printing
 global options, verbose, warning, debugging, massage_fonts
@@ -124,7 +121,7 @@ def good_match(one,two):
     are a good (fuzzy) match for each other. First we strip out some latex
     characters.
     """
-    return fuzz.ratio(remove_tex.sub('',one).lower(), remove_tex.sub('',two).lower())>90
+    return fuzzywuzzy.fuzz.ratio(remove_tex.sub('',one).lower(), remove_tex.sub('',two).lower())>90
 
 class Bibtex(OrderedDict):
     r"""
@@ -196,6 +193,10 @@ class Bibtex(OrderedDict):
                 else:
                     self[lkey]=val
 
+        # try to guess whether this entry corresponds to a preprint
+        self.is_preprint=( (self.has_key('pages') and self['pages'].lower() in ['preprint', 'to appear', 'in preparation'])
+                  or not (self.has_key('pages') and self.has_key('journal')) )
+
     def __str__(self):
         r"""
         Return a string for printing the bibtex entry.
@@ -223,7 +224,7 @@ class Bibtex(OrderedDict):
         """
         return hasattr(self, 'pub_type') and (self.pub_type in bibtex_pub_types)
 
-    def update_entry(self, url, search, preprint):
+    def update_entry(self, url, search):
         """
         Call `url` to search for the bibtex entry as specified by the dictionary
         `search` and then update `self` if there is a unique good match. If
@@ -269,8 +270,9 @@ class Bibtex(OrderedDict):
                 debugging('No change')
 
         else:  # no good match, or more than one good match
-            if not preprint:
-                verbose("%s\n%s Didn't find %s=%s"%('-'*30, '!' if preprint else '!', self.cite_key, 
+            if not self.is_preprint:
+                verbose("%s\n%s Didn't find %s=%s"%('-'*30, 
+                            '!' if self.is_preprint else '!', self.cite_key,
                             self['title'][:40] if self.has_key('title') else '???'))
 
     def mrlookup(self):
@@ -288,11 +290,7 @@ class Bibtex(OrderedDict):
         debugging('='*30)
         search={'bibtex':'checked'}   # a dictionary that will contain the parameters for the mrlookup search
 
-        # try to guess whether this entry corresponds to a preprint
-        preprint=( (self.has_key('pages') and self['pages'].lower() in ['preprint', 'to appear', 'in preparation'])
-                  or not (self.has_key('pages') and self.has_key('journal')) )
-
-        if self.has_key('pages') and not preprint:
+        if self.has_key('pages') and not self.is_preprint:
             pages=self.page_nums.search(self['pages'])
             if not pages is None:
                 search['ipage']=pages.group('apage')  # first page
@@ -324,10 +322,10 @@ class Bibtex(OrderedDict):
             if len(authors)>5:
                 search['au']=authors[5:]
 
-        if self.has_key('title') and len(self['title'])>0 and (not search.has_key('ipage') or preprint):
+        if self.has_key('title') and len(self['title'])>0 and (not search.has_key('ipage') or self.is_preprint):
             search['ti']=clean_title(self['title'])
 
-        self.update_entry('http://www.ams.org/mrlookup', search, preprint)
+        self.update_entry('http://www.ams.org/mrlookup', search)
 
     def mathscinet(self):
         """
@@ -421,29 +419,30 @@ def main():
         options.check_all=True
     else:
         if options.replace:
-            # copy original file to filename+'.bak' and write updates to filename
-            try:
-                shutil.copyfile(options.filename.name,options.filename.name+'.bak')
-                newfile=options.filename.name
-            except IOError,e:
-                biberror('unable to create backup file')
+            newfile=options.filename.name  # will be backed up below
         elif options.outputfile is None:
             # write updates to 'updated_'+filename
-            dir=dirname(options.bibtexfile.name)
-            base=basename(options.bibtexfile.name)
+            dir=os.path.dirname(options.bibtexfile.name)
+            base=os.path.basename(options.bibtexfile.name)
             newfile='updated_%s' % base if dir=='' else r'%s/updated_%s' %(dir,base)
         else:
             newfile=options.outputfile
 
+        # backup the output file by adding .bak if it exists and is non-empty
+        if os.path.isfile(newfile) and os.path.getsize(newfile)>0:
+            try:
+                shutil.copyfile(newfile,newfile+'.bak')
+            except IOError:
+                biberror('unable to create backup file for %s'%newfile)
+
         # open newfile
         try:
             newbibfile=open(newfile,'w')
-        except IOError,e:
+            newbibfile.write(papers[:asterisk]) # copy everything up to the first @
+        except IOError:
             bib_error('unable to open new bibtex file %s' % newfile)
 
-        newbibfile.write(papers[:asterisk]) # copy everything up to the first @
-
-    # finally we are ready to start processing the papers from the bibtex file
+    # we are now ready to start processing the papers from the bibtex file
     for bibentry in bibtex_entry.finditer(papers[asterisk:]):
         if not bibentry is None:
             bt=Bibtex(bibentry.group())
