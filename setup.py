@@ -8,7 +8,7 @@ setup(name='bibupdate',
 
       author='Andrew Mathas',
       author_email='andrew.mathas@gmail.com',
-      url='https://bitbucket.org/aparticle/bibupdate',
+      url='https://bitbucket.org/AndrewsBucket/bibupdate',
 
       packages=['bibupdate'],
       entry_points={'console_scripts': ['bibupdate = bibupdate:main', ],},

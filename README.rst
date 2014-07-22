@@ -197,10 +197,10 @@ reasons:
 
 * Apostrophes: Searching for a title that contains, for example, "James's Conjecture" 
   confuses mrlookup_.
-* Accents in authors: Generally accents are not a problem because the AMS is
-  LaTeX_ aware, however, issues arise when there are multiple ways to spell a
-  given authors name such as Koenig and K\"onig. Of course, different spellings
-  can occur without accents.
+* Ambiguous spelling: Issues arise when there are multiple ways to spell a
+  given author's name. This can often happen if the surname involves accents
+  (such as Koenig and K\\"onig). Most of the time accents themselves are not a
+  problem because the AMS is LaTeX_ aware.
 * Pages numbers: electronic journals, in particular, often have strange page
   numbers (for example "Art. ID rnm032, 24"). bibupdate_ assumes that page
   numbers are always given in the format like 4--42.
