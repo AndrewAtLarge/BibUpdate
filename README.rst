@@ -218,19 +218,15 @@ any system that supports Python_, however, I only promise that it will work
 on an up-to-date mac or Linux system. In the event that it does not install I
 may not be able to help you as I will not have access to your system.
 
-There are two installation routes.
+From the command line type::
 
-1. From the command line type::
-
-      pip install http://bitbucket.org/AndrewsBucket/bibupdate/downloads/bibupdate-1.1.tar.gz
-
-2. Clone or download_ this repository, change directory into it and then
-   run *pip* or *easy_install*::
+      pip install bibupdate
 
       pip setup.py install
 
 Instead of pip, you should also be able to use easy_install. The program should
-run on python 2.7 and 2.8...I haven't tried python3.
+run on python 2.7 and 2.8...I haven't tried python3. You can also clone or
+download_ the git repository and work directly with the source.
 
 Support
 =======
