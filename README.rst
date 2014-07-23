@@ -191,7 +191,7 @@ Options and defaults
   the original BibTeX_ is made with a .bak extension. it is also possible to
   specify the output filename as the last argument to bibupdate.
 
--w WRAP_LEN --wrap WRAP_LEN    wrap bibtex fields to specified width
+-w LEN --wrap LEN    wrap bibtex fields to specified width
 
   Limits the maximum line length in the output BibTeX_ file. In theory this is
   supposed to make it easier to compare the updated BibTeX_ file with the
@@ -199,6 +199,10 @@ Options and defaults
 
 Known issues
 ------------
+
+\bibupdate_ reads BibTeX_ files using a small number of regular expressions so
+there may be be some corner cases where it fails to extract all of the field
+entries.
 
 There are a small number of cases where bibupdate_ fails to correctly identify
 papers that are listed in MathSciNet_. These failures occur for the following
@@ -248,7 +252,7 @@ To do
 =====
 
 - More intelligent searches using MathSciNet_.
-- An rc file?
+- Add an rc file?
 - Fix the wrapping of bibtex fields.
 - Interface to the arXiv_? In principle, this is easy to do although,
   ultimately, it would probably not work because the arXiv_ blocks frequent
