@@ -2,6 +2,7 @@
 
 * Create backup of output file when it exists and is non-empty
 * Fix default option for --font-replace
+* Added wrap option for updated bibtex file
 
 **v1.1** July 2014 -- initial release
 

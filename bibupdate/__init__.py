@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
-from __future__ import unicode_literals    # enforce unicode as per python3
-
 r"""
-==============================================
-bibupdate - a script for updating bibtex files
-==============================================
+===============================================
+bibupdate - update the entries of a bibtex file
+===============================================
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -42,12 +40,13 @@ bibupdate_version=r'''
 '''.format(version=__version__, license=__license__)
 
 ######################################################
-import argparse, os, re, shutil, sys, urllib
+import argparse, os, re, shutil, sys, urllib, __builtin__
 from collections import OrderedDict
 from fuzzywuzzy import fuzz
+from textwrap import wrap
 
 # global options, used mainly for printing
-global options, verbose, warning, debugging, fix_fonts
+global options, verbose, warning, debugging, fix_fonts, wrapped
 
 def bib_print(*args):
     r"""
@@ -103,7 +102,7 @@ bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incolle
 
 # need to massage some of the font specifications returned by mrlookup to "standard" latex fonts.
 replace_fonts=[ ('mathbb', re.compile(r'\\Bbb (\w)'), re.compile(r'\\Bbb\s*({\w*})')),
-                ('mathscr', re.compile(r'\\scr (\w)'), re.compile(r'\\scr\s*({\w*})')),
+                ('mathcal', re.compile(r'\\scr (\w)'), re.compile(r'\\scr\s*({\w*})')),
                 ('mathfrak', re.compile(r'\\germ (\w)'), re.compile(r'\\germ\s*{(\w*)}'))
 ]
 def font_replace(string):
@@ -114,7 +113,7 @@ def font_replace(string):
     Currently::
 
         - \Bbb X*  --> \mathbb{X*}
-        - \scr X*  --> \mathscr{X*}
+        - \scr X*  --> \mathcal{X*}
         - \germ X* --> \mathfrak{X*}
     """
     new_string=''
@@ -131,6 +130,24 @@ def good_match(one,two):
     characters.
     """
     return fuzz.ratio(remove_tex.sub('',one).lower(), remove_tex.sub('',two).lower())>90
+
+class NonnegativeIntegers(__builtin__.list):
+    r"""
+    A class that gives an easy test for positive integers::
+
+        >>> 1 in NonnegativeIntegers()
+        True
+        >>> -1 in NonnegativeIntegers()
+        False
+    """
+    def __str__(self):
+        return 'positive integers'
+
+    def __contains__(self,x):
+        r"""
+        By implementing containment we can test if `x` is in `NonnegativeIntegers()`.
+        """
+        return isinstance(x,int) and x>=0
 
 class Bibtex(OrderedDict):
     r"""
@@ -211,8 +228,9 @@ class Bibtex(OrderedDict):
         Return a string for printing the bibtex entry.
         """
         if hasattr(self,'pub_type'):
-            return '@%s{%s,\n  %s\n}' % (self.pub_type.upper(), self.cite_key, ',\n  '.join('%s = {%s}'%(key,self[key])
-                for key in self.keys() if key not in options.ignored_fields))
+            return '@%s{%s,\n  %s\n}' % (self.pub_type.upper(), self.cite_key,
+                    ',\n  '.join('%s = {%s}'%(key,wrapped(self[key]))
+                     for key in self.keys() if key not in options.ignored_fields))
         else:
             return self.bib_string
 
@@ -349,7 +367,7 @@ def process_options():
     r"""
     Set up and then parse the options to bibupdate using argparse.
     """
-    global options, verbose, warning, debugging, fix_fonts
+    global options, verbose, warning, debugging, fix_fonts, wrapped
 
     parser = argparse.ArgumentParser(description='Update and validate BibTeX files',
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -364,7 +382,7 @@ def process_options():
     parser.add_argument('-f','--font_replace',action='store_false', default=True,
                         help='do NOT replace fonts \Bbb, \germ and \scr')
     parser.add_argument('-i','--ignored-fields',type=str,default=['coden','mrreviewer','fjournal','issn'],
-                        action='append',help='a string of bibtex fields to ignore')
+                        metavar='IGNORE', action='append',help='a string of bibtex fields to ignore')
     parser.add_argument('-l','--log', default=sys.stdout, type=argparse.FileType('w'),
                         help='log mesages to specified file (defaults to stdout)')
 
@@ -379,6 +397,8 @@ def process_options():
                         help='printer fewer messages')
     parser.add_argument('-r','--replace',action='store_true', default=False,
                         help='replace existing bibtex file')
+    parser.add_argument('-w','--wrap',type=int, default=0, action='store', choices=NonnegativeIntegers(),
+                        metavar='LEN', help='wrap bibtex fields to specified width')
 
     # suppress printing of these two options
     parser.add_argument('--version',action='version', version=bibupdate_version, help=argparse.SUPPRESS)
@@ -394,6 +414,12 @@ def process_options():
     # if check_all==True then we want to check everything
     if options.check_all:
         options.all=True
+
+    # define word wrapping wehn requested
+    if options.wrap!=0:
+        wrapped=lambda field: '\n'.join(wrap(field,options.wrap,subsequent_indent='\t'))
+    else:
+        wrapped=lambda field: field
 
     # define debugging, verbose and warning functions
     if options.debugging:

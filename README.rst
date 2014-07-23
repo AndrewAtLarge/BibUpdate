@@ -4,7 +4,8 @@ bibupdate
 
 **Usage**: 
 
-bibupdate [-a] [-c] [-f] [-i IGNORE] [-l LOG] [-m | -M] [-q] [-r] <bibtexfile> [output_file]
+usage: bibupdate [-h] [-a] [-c] [-f] [-i IGNORE] [-l LOG] [-m | -M] [-q] [-r]
+                 [-w LEN] bibtexfile [outputfile]
 
 This is a command line tool for updating the entries in a BibTeX_ file using
 mrlookup_. By default bibupdate_ tries to update the entry for each paper
@@ -22,6 +23,7 @@ disable future checking of an entry by giving it an empty ``mrnumber`` field).
   -l LOG, --log LOG     log messages to specified file (defaults to stdout)
   -q, --quietness       print fewer messages
   -r  --replace         replace existing bibtex file
+  -w {}, --wrap {}      wrap bibtex fields to specified width
 
   -m, --mrlookup        use mrlookup to update bibtex entries (default)
   -M, --mathscinet      use mathscinet to update bibtex entries (less flexible)
@@ -105,7 +107,7 @@ Options and their defaults
   LaTeX_ friendly fonts:
 
         - \\Bbb X  --> \\mathbb{X}
-        - \\scr X  --> \\mathscr{X}
+        - \\scr X  --> \\mathcal{X}
         - \\germ X --> \\mathfrak{X}
 
   The -f option *disables* these substitutions.
@@ -171,11 +173,11 @@ Options and their defaults
     ! did not find QSAII=On Quantitative Substitutional Analysis
 
   Each bibtex_ entry is identified by the citation key and the (first 50
-  characters of the) document title, as specified by your database. Of the three
-  missed entries above, bibupdate_ thinks that the first and third are preprints
-  (they are not marked with an !) and  that the final article should already
-  have been published. With the entry that bibupdate_ found, only the publisher
-  field was changed to include the city of publication.
+  characters of the sanitised) document title, as specified by your database. Of
+  the three missed entries above, bibupdate_ thinks that the first and third are
+  preprints (they are not marked with an !) and  that the final article should
+  already have been published. With the entry that bibupdate_ found, only the
+  publisher field was changed to include the city of publication.
 
   In *warning mode*, with the -q option, you are "warned" whenever changes are
   made to an entry or when the paper is not found in the external datbase. That
@@ -188,6 +190,12 @@ Options and their defaults
   Replace the existing BibTeX_ file with the updated file. A backup version of
   the original BibTeX_ is made with a .bak extension. it is also possible to
   specify the output filename as the last argument to bibupdate.
+
+-w WRAP_LEN --wrap WRAP_LEN    wrap bibtex fields to specified width
+
+  Limits the maximum line length in the output BibTeX_ file. In theory this is
+  supposed to make it easier to compare the updated BibTeX_ file with the
+  original one, however, this doesn't always wook.
 
 Known issues
 ------------
