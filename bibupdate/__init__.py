@@ -34,8 +34,9 @@ bibupdate_version=r'''
 '''.format(version=__version__, license=__license__)
 
 ######################################################
-import argparse, fuzzywuzzy, os, re, shutil, sys, urllib
+import argparse, os, re, shutil, sys, urllib
 from collections import OrderedDict
+from fuzzywuzzy import fuzz
 
 # global options, used mainly for printing
 global options, verbose, warning, debugging, massage_fonts
@@ -121,7 +122,7 @@ def good_match(one,two):
     are a good (fuzzy) match for each other. First we strip out some latex
     characters.
     """
-    return fuzzywuzzy.fuzz.ratio(remove_tex.sub('',one).lower(), remove_tex.sub('',two).lower())>90
+    return fuzz.ratio(remove_tex.sub('',one).lower(), remove_tex.sub('',two).lower())>90
 
 class Bibtex(OrderedDict):
     r"""
@@ -424,7 +425,7 @@ def main():
             # write updates to 'updated_'+filename
             dir=os.path.dirname(options.bibtexfile.name)
             base=os.path.basename(options.bibtexfile.name)
-            newfile='updated_%s' % base if dir=='' else r'%s/updated_%s' %(dir,base)
+            newfile='{dir}updated_{base}'.format(dir='' if dir=='' else dir+'/',base=base)
         else:
             newfile=options.outputfile
 
