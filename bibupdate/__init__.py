@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import unicode_literals    # enforce unicode as per python3
+
 r"""
 ==============================================
 bibupdate - a script for updating bibtex files
@@ -264,8 +266,8 @@ class Bibtex(OrderedDict):
             differences=[key for key in match if key not in options.ignored_fields and self[key]<>match[key]]
             if differences!=[] and any(self[key]!='' for k in differences):
                 if options.check_all:
-                    bib_print('%s\n- %s=%s\n%s' % ('='*30, self.cite_key, self['title'][:50],
-                                  '\n'.join('-  %s: %s\n- %s-> %s'%(key,self[key], ' '*len(key), match[key]) 
+                    bib_print('%s\n%s=%s\n%s' % ('='*30, self.cite_key, self['title'][:50],
+                                  '\n'.join(' %s: %s\n%s-> %s'%(key,self[key], ' '*len(key), match[key]) 
                                         for key in differences)))
                 else:
                     warning('%s\n+ Updating %s=%s' % ('+'*30, self.cite_key, self['title'][:50]))
@@ -417,7 +419,7 @@ def main():
         papers=bibfile.read()
         bibfile.close()
         asterisk=papers.index('@')
-    except IOError,e:
+    except IOError:
         bib_error('unable to open bibtex file %s' % options.bibtexfile.name)
 
     # if we are checking for errors then we check EVERYTHING but, in this case,
