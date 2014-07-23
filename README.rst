@@ -257,7 +257,7 @@ AUTHOR
 
 `Andrew Mathas`_
 
-bibupdate_ Version 1.2. Copyright (C) 2012-14 
+bibupdate_ Version 1.5. Copyright (C) 2012-14 
 
 GNU General Public License, Version 3, 29 June 2007
 
