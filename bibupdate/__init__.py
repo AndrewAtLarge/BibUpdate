@@ -21,7 +21,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 See https://bitbucket.org/aparticle/bibupdate for more details
 about the bibupdate program.
 
-Andrew Mathas andrew.mathas@sydney.edu.au
+Andrew Mathas andrew.mathas@gmail.com
 Copyright (C) 2012-14 
 """
 
