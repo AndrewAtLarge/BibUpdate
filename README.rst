@@ -195,7 +195,7 @@ Options and their defaults
 
   Limits the maximum line length in the output BibTeX_ file. In theory this is
   supposed to make it easier to compare the updated BibTeX_ file with the
-  original one, however, this doesn't always wook.
+  original one, however, in practise this doesn't always work.
 
 Known issues
 ------------

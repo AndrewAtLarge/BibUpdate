@@ -356,8 +356,7 @@ class Bibtex(OrderedDict):
 
     def mathscinet(self):
         """
-        Use MathSciNet to check/update the entry using the mrnumber field, if it
-        exsists.
+        Use MathSciNet to check/update the entry using the mrnumber field, if it exists.
         """
         if options.all or self.has_key('mrnumber'):
             search={'fmt': 'bibtex', 'pg1': 'MR', 's1': self['mrnumber'].split()[0]}
@@ -384,7 +383,7 @@ def process_options():
     parser.add_argument('-i','--ignored-fields',type=str,default=['coden','mrreviewer','fjournal','issn'],
                         metavar='IGNORE', action='append',help='a string of bibtex fields to ignore')
     parser.add_argument('-l','--log', default=sys.stdout, type=argparse.FileType('w'),
-                        help='log mesages to specified file (defaults to stdout)')
+                        help='log messages to specified file (defaults to stdout)')
 
     # add a mutually exclusive switch for choosing between mrlookup and mathscinet
     lookup=parser.add_mutually_exclusive_group()
@@ -415,7 +414,7 @@ def process_options():
     if options.check_all:
         options.all=True
 
-    # define word wrapping wehn requested
+    # define word wrapping when requested
     if options.wrap!=0:
         wrapped=lambda field: '\n'.join(wrap(field,options.wrap,subsequent_indent='\t'))
     else:
