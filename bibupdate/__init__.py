@@ -380,7 +380,7 @@ def process_options():
     parser.add_argument('-f','--font_replace',action='store_false', default=True,
                         help='do NOT replace fonts \Bbb, \germ and \scr')
     parser.add_argument('-i','--ignored-fields',type=str,default=['coden','mrreviewer','fjournal','issn'],
-                        metavar='IGNORE', action='append',help='a string of bibtex fields to ignore')
+                        metavar='FIELDS', action='append',help='a string of bibtex fields to ignore')
     parser.add_argument('-l','--log', default=sys.stdout, type=argparse.FileType('w'),
                         help='log messages to specified file (defaults to stdout)')
 

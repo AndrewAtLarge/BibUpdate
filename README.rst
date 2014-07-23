@@ -4,7 +4,7 @@ bibupdate
 
 **Usage**: 
 
-usage: bibupdate [-h] [-a] [-c] [-f] [-i IGNORE] [-l LOG] [-m | -M] [-q] [-r]
+usage: bibupdate [-h] [-a] [-c] [-f] [-i FIELDS] [-l LOG] [-m | -M] [-q] [-r]
                  [-w LEN] bibtexfile [outputfile]
 
 This is a command line tool for updating the entries in a BibTeX_ file using
@@ -18,7 +18,7 @@ disable future checking of an entry by giving it an empty ``mrnumber`` field).
   -c, --check_all       check all bibtex entries against a database
   -f, --font_replace    do NOT replace fonts \Bbb, \germ and \scr
   -h, --help            show this help message and exit
-  -i IGNORE, --ignored-fields IGNORE
+  -i FIELDS, --ignored-fields FIELDS
                         a string of bibtex fields to ignore
   -l LOG, --log LOG     log messages to specified file (defaults to stdout)
   -q, --quietness       print fewer messages
@@ -112,7 +112,7 @@ Options and defaults
 
   The -f option *disables* these substitutions.
 
--i IGNORE, --ignored-fields=IGNORE  A string of BibTeX_ fields to ignore when writing the updated file
+-i FIELDS, --ignored-fields=FIELDS  A string of BibTeX_ fields to ignore when writing the updated file
 
   By default bibupdate_ removes the following fields from each BibTeX_ entry:
 
