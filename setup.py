@@ -8,7 +8,7 @@ if sys.version_info[:2] < (2, 7):
     ]
 
 setup(name='bibupdate',
-      author=bibupdate.__author__
+      author=bibupdate.__author__,
       author_email=bibupdate.__author_email__,
 
       description=bibupdate.__description__,
