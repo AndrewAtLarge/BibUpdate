@@ -23,7 +23,7 @@ disable future checking of an entry by giving it an empty ``mrnumber`` field).
   -l LOG, --log LOG     log messages to specified file (defaults to stdout)
   -q, --quietness       print fewer messages
   -r  --replace         replace existing bibtex file
-  -w {}, --wrap {}      wrap bibtex fields to specified width
+  -w LEN --wrap LEN     wrap bibtex fields to specified width
 
   -m, --mrlookup        use mrlookup to update bibtex entries (default)
   -M, --mathscinet      use mathscinet to update bibtex entries (less flexible)
@@ -84,8 +84,8 @@ BibTeX_ file over the years (for example, incorrect page numbers and publication
 years). Now I use the program to automatically update the preprint entries in my
 database when the papers appear in MathSciNet_ after they are published.
 
-Options and their defaults
---------------------------
+Options and defaults
+--------------------
 
 -a, --all  Update or validate ALL BibTeX entries
 
@@ -248,11 +248,13 @@ To do
 =====
 
 - More intelligent searches using MathSciNet_.
+- An rc file?
+- Fix the wrapping of bibtex fields.
 - Interface to the arXiv_? In principle, this is easy to do although,
   ultimately, it would probably not work because the arXiv_ blocks frequent
   requests from the same IP address in order to discourage robots.
 
-AUTHOR
+Author
 ======
 
 `Andrew Mathas`_
