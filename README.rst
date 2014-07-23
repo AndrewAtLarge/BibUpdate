@@ -170,12 +170,12 @@ Options and their defaults
     ------------------------------
     ! did not find QSAII=On Quantitative Substitutional Analysis
 
-  Each bibtex_ entry is identified by the citation key and the document title,
-  as specified by your database. Of the three missed entries above, bibupdate_
-  thinks that the first and third are preprints (they are not marked with an !)
-  and  that the final article should already have been published. With the entry
-  that bibupdate_ found, only the publisher field was changed to include the city 
-  of publication.
+  Each bibtex_ entry is identified by the citation key and the (first 50
+  characters of the) document title, as specified by your database. Of the three
+  missed entries above, bibupdate_ thinks that the first and third are preprints
+  (they are not marked with an !) and  that the final article should already
+  have been published. With the entry that bibupdate_ found, only the publisher
+  field was changed to include the city of publication.
 
   In *warning mode*, with the -q option, you are "warned" whenever changes are
   made to an entry or when the paper is not found in the external datbase. That

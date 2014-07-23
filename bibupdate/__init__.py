@@ -25,9 +25,15 @@ Andrew Mathas andrew.mathas@gmail.com
 Copyright (C) 2012-14 
 """
 
-# Version and license information
-__version__=1.2
+# Metadata - used in setup.py
+__author__='Andrew Mathas',
+__author_email__='andrew.mathas@gmail.com',
+__description__='Automatically update the entries of a bibtex file using mrlookup/MathSciNet',
+__keywords__+'bibtex, mrlookup, MathSciNet, latex',
 __license__='GNU General Public License, Version 3, 29 June 2007'
+__url__='https://bitbucket.org/AndrewsBucket/bibupdate',
+__version__=1.2
+
 bibupdate_version=r'''
 %(prog)s version {version}: update entries in a bibtex file
 {license}
@@ -39,7 +45,7 @@ from collections import OrderedDict
 from fuzzywuzzy import fuzz
 
 # global options, used mainly for printing
-global options, verbose, warning, debugging, massage_fonts
+global options, verbose, warning, debugging, fix_fonts
 
 def bib_print(*args):
     r"""
@@ -190,7 +196,7 @@ class Bibtex(OrderedDict):
                 val=' '.join(val.split()) # remove any internal space from val
                 lkey=key.lower()          # keys always in lower case
                 if lkey=='title':
-                    self[lkey]=massage_fonts(val)
+                    self[lkey]=fix_fonts(val)
                 else:
                     self[lkey]=val
 
@@ -258,13 +264,13 @@ class Bibtex(OrderedDict):
             differences=[key for key in match if key not in options.ignored_fields and self[key]<>match[key]]
             if differences!=[] and any(self[key]!='' for k in differences):
                 if options.check_all:
-                    bib_print('%s\nV %s=%s\n%s' % ('='*30, self.cite_key, self['title'][:50],
-                                  '\n'.join('V %s: %s\nV%s-> %s'%(key,self[key], ' '*len(key), match[key]) 
-                                        for key in differences if self[key]!='')))
+                    bib_print('%s\n- %s=%s\n%s' % ('='*30, self.cite_key, self['title'][:50],
+                                  '\n'.join('-  %s: %s\n- %s-> %s'%(key,self[key], ' '*len(key), match[key]) 
+                                        for key in differences)))
                 else:
                     warning('%s\n+ Updating %s=%s' % ('+'*30, self.cite_key, self['title'][:50]))
-                    verbose('\n'.join('+ %s: %s\n+%s-> %s'%(key,self[key], ' '*len(key),
-                                        match[key]) for key in differences if self[key]!=''))
+                    verbose('\n'.join('+  %s: %s\n+%s->  %s'%(key,self[key], ' '*len(key),
+                                        match[key]) for key in differences))
                     for key in differences:
                         self[key]=match[key]
             else:
@@ -341,7 +347,7 @@ def process_options():
     r"""
     Set up and then parse the options to bibupdate using argparse.
     """
-    global options, verbose, warning, debugging, massage_fonts
+    global options, verbose, warning, debugging, fix_fonts
 
     parser = argparse.ArgumentParser(description='Update and validate BibTeX files',
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -353,7 +359,7 @@ def process_options():
                         help='update or validate ALL BibTeX entries')
     parser.add_argument('-c','--check-all',action='store_true', default=False,
                         help='check all bibtex entries against a database')
-    parser.add_argument('-f','--font_replace',action='store_false', default=False,
+    parser.add_argument('-f','--font_replace',action='store_false', default=True,
                         help='do NOT replace fonts \Bbb, \germ and \scr')
     parser.add_argument('-i','--ignored-fields',type=str,default=['coden','mrreviewer','fjournal','issn'],
                         action='append',help='a string of bibtex fields to ignore')
@@ -396,8 +402,8 @@ def process_options():
     verbose=bib_print if options.quietness==2 else lambda *arg: None
     warning=bib_print if options.quietness>=1 else lambda *arg: None
 
-    # a shortcut function for replacing fonts
-    massage_fonts=font_replace if options.font_replace else lambda ti: ti
+    # a shorthand for fixed the fonts (to avoid an if-statement when calling it)
+    fix_fonts=font_replace if options.font_replace else lambda title: title
 
 def main():
     r"""

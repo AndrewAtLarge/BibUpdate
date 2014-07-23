@@ -1,6 +1,7 @@
 **v1.2** 
 
 * Create backup of output file when it exists and is non-empty
+* Fix default option for --font-replace
 
 **v1.1** July 2014 -- initial release
 
