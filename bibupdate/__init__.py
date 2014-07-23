@@ -40,10 +40,9 @@ bibupdate_version=r'''
 '''.format(version=__version__, license=__license__)
 
 ######################################################
-import argparse, os, re, shutil, sys, urllib, __builtin__
+import argparse, os, re, shutil, sys, textwrap, urllib, __builtin__
 from collections import OrderedDict
 from fuzzywuzzy import fuzz
-from textwrap import wrap
 
 # global options, used mainly for printing
 global options, verbose, warning, debugging, fix_fonts, wrapped
@@ -416,7 +415,7 @@ def process_options():
 
     # define word wrapping when requested
     if options.wrap!=0:
-        wrapped=lambda field: '\n'.join(wrap(field,options.wrap,subsequent_indent='\t'))
+        wrapped=lambda field: '\n'.join(textwrap.wrap(field,options.wrap,subsequent_indent='\t'))
     else:
         wrapped=lambda field: field
 
