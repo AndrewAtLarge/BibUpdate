@@ -26,14 +26,15 @@ Copyright (C) 2012-14
 """
 
 # Metadata - used in setup.py
-__author__='Andrew Mathas',
-__author_email__='andrew.mathas@gmail.com',
-__description__='Automatically update the entries of a bibtex file using mrlookup/MathSciNet',
-__keywords__='bibtex, mrlookup, MathSciNet, latex',
+__author__='Andrew Mathas'
+__author_email__='andrew.mathas@gmail.com'
+__description__='Automatically update the entries of a bibtex file'
+__keywords__='bibtex, mrlookup, MathSciNet, latex'
 __license__='GNU General Public License, Version 3, 29 June 2007'
-__url__='https://bitbucket.org/AndrewsBucket/bibupdate',
-__version__=1.3
+__url__='https://bitbucket.org/AndrewsBucket/bibupdate'
+__version__='1.3'
 
+# for command line option
 bibupdate_version=r'''
 %(prog)s version {version}: update entries in a bibtex file
 {license}
@@ -130,6 +131,7 @@ def good_match(one,two):
     """
     return fuzz.ratio(remove_tex.sub('',one).lower(), remove_tex.sub('',two).lower())>90
 
+# overkill for "type checking" of the wrap length command line option
 class NonnegativeIntegers(__builtin__.list):
     r"""
     A class that gives an easy test for positive integers::
