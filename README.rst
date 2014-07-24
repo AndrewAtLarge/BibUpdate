@@ -263,11 +263,7 @@ Author
 
 `Andrew Mathas`_
 
-<<<<<<< HEAD
-bibupdate_ Version 1.5. Copyright (C) 2012-14 
-=======
 bibupdate_ Version 1.3. Copyright (C) 2012-14 
->>>>>>> release-1.3
 
 GNU General Public License, Version 3, 29 June 2007
 

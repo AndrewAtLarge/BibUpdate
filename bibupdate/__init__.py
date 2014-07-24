@@ -97,18 +97,18 @@ remove_mathematics=re.compile(r'\$[^\$]+\$')  # assume no nesting
 clean_title=lambda title: remove_tex.sub('',remove_mathematics.sub('',title))
 
 # to help in checking syntax define recognised/valid types of entries in a bibtex database
-bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incollection', 'inproceedings', 'manual',
-                  'mastersthesis', 'misc', 'phdthesis', 'proceedings', 'techreport', 'unpublished']
+bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incollection', 
+                  'inproceedings', 'manual', 'mastersthesis', 'misc', 'phdthesis', 
+                  'proceedings', 'techreport', 'unpublished'
+]
 
 # need to massage some of the font specifications returned by mrlookup to "standard" latex fonts.
 replacement_fonts={ 'Bbb':'mathbb', 
-                'scr' :'mathcal', 
-                'germ':'mathfrak' 
+                    'scr' :'mathcal', 
+                    'germ':'mathfrak' 
 }
-# generate regular expressions to do the two matches 
-replace_fonts=[ re.compile(r'\\(%s)\s*(\w)' % '|'.join('%s'%f for f in replacement_fonts.keys())),
-                re.compile(r'\\(%s)\s*{(\w*)}' % '|'.join('%s'%f for f in replacement_fonts.keys()))
-]
+# we need to replace expressions like \scr C and \scr{Cat}
+replace_fonts=re.compile(r'\\(%s)\s*(\w|\{[\s\w]*\})' % '|'.join('%s'%f for f in replacement_fonts.keys()))
 def font_replace(string):
     r"""
     Return a new version of `string` with various fonts commands replaced with
@@ -120,13 +120,7 @@ def font_replace(string):
         - \scr X*  --> \mathcal{X*}
         - \germ X* --> \mathfrak{X*}
     """
-    rep_s=replace_fonts[0].sub(lambda match : r'\%s{%s}' % (replacement_fonts[match.group(1)],match.group(2)), string)
-    return replace_fonts[1].sub(lambda match : r'\%s{%s}' % (replacement_fonts[match.group(1)],match.group(2)), rep_s)
-    last=0
-    for rep in replace_fonts:
-        string=rep[1].sub(r'\\%s{\1}'%rep[0], string)   # eg. \Bbb C    --> \mathbb{C}
-        string=rep[2].sub(r'\\%s{\1}'%rep[0], string)   # eg. \germ{sl} --> \mthfrak{sl}
-    return string
+    return replace_fonts.sub(lambda match : r'\%s{%s}' % (replacement_fonts[match.group(1)],match.group(2)), string)
 
 def good_match(one,two):
     r"""
