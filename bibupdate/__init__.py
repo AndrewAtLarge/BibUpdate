@@ -32,7 +32,7 @@ __description__='Automatically update the entries of a bibtex file'
 __keywords__='bibtex, mrlookup, MathSciNet, latex'
 __license__='GNU General Public License, Version 3, 29 June 2007'
 __url__='https://bitbucket.org/AndrewsBucket/bibupdate'
-__version__=1.3
+__version__='1.3dev'
 
 # for command line option
 bibupdate_version=r'''
