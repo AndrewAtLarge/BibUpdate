@@ -103,13 +103,13 @@ bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incolle
 ]
 
 # need to massage some of the font specifications returned by mrlookup to "standard" latex fonts.
-replacement_fonts={ 'Bbb':'mathbb', 
+fonts_to_replace={ 'Bbb':'mathbb', 
                     'scr' :'mathcal', 
                     'germ':'mathfrak' 
 }
-# we need to replace expressions like \scr C and \scr{Cat}
-replace_fonts=re.compile(r'\\(%s)\s*(\w|\{[\s\w]*\})' % '|'.join('%s'%f for f in replacement_fonts.keys()))
-def font_replace(string):
+# a factory regular expression to replace expressions like \scr C and \scr{ Cat} in one hit
+font_replacer=re.compile(r'\\(%s)\s*(\w|\{[\s\w]*\})' % '|'.join('%s'%f for f in fonts_to_replace.keys()))
+def replace_fonts(string):
     r"""
     Return a new version of `string` with various fonts commands replaced with
     their more standard LaTeX variants.
@@ -120,7 +120,7 @@ def font_replace(string):
         - \scr X*  --> \mathcal{X*}
         - \germ X* --> \mathfrak{X*}
     """
-    return replace_fonts.sub(lambda match : r'\%s{%s}' % (replacement_fonts[match.group(1)],match.group(2)), string)
+    return font_replacer.sub(lambda match : r'\%s{%s}' % (replacement_fonts[match.group(1)],match.group(2)), string)
 
 def good_match(one,two):
     r"""
@@ -378,8 +378,8 @@ def process_options():
                         help='update or validate ALL BibTeX entries')
     parser.add_argument('-c','--check-all',action='store_true', default=False,
                         help='check all bibtex entries against a database')
-    parser.add_argument('-f','--font_replace',action='store_false', default=True,
-                        help='do NOT replace fonts \Bbb, \germ and \scr')
+    parser.add_argument('-k','--keep_fonts',action='store_true', default=False,
+                        help='do NOT replace fonts \Bbb, \germ and \scr in titles')
     parser.add_argument('-i','--ignored-fields',type=str,default=['coden','mrreviewer','fjournal','issn'],
                         metavar='FIELDS', action='append',help='a string of bibtex fields to ignore')
     parser.add_argument('-l','--log', default=sys.stdout, type=argparse.FileType('w'),
@@ -392,10 +392,10 @@ def process_options():
     lookup.add_argument('-M','--mathscinet',action='store_const',const='mathscinet',dest='lookup',
                         help='use mathscinet to update bibtex entries (less flexible)')
 
+    parser.add_argument('-o','--overwrite',action='store_true', default=False,
+                        help='overwrite existing bibtex file')
     parser.add_argument('-q','--quietness',action='count', default=2,
                         help='printer fewer messages')
-    parser.add_argument('-r','--replace',action='store_true', default=False,
-                        help='replace existing bibtex file')
     parser.add_argument('-w','--wrap',type=int, default=0, action='store', choices=NonnegativeIntegers(),
                         metavar='LEN', help='wrap bibtex fields to specified width')
 
@@ -430,7 +430,7 @@ def process_options():
     warning=bib_print if options.quietness>=1 else lambda *arg: None
 
     # a shorthand for fixed the fonts (to avoid an if-statement when calling it)
-    fix_fonts=font_replace if options.font_replace else lambda title: title
+    fix_fonts=lambda title: title if options.keep_fonts else replace_fonts
 
 def main():
     r"""
@@ -452,7 +452,7 @@ def main():
     if options.check_all:
         options.check_all=True
     else:
-        if options.replace:
+        if options.overwite:
             newfile=options.filename.name  # will be backed up below
         elif options.outputfile is None:
             # write updates to 'updated_'+filename

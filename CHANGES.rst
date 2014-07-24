@@ -1,5 +1,6 @@
 **v1.3** - 
 
+* Better names for some of the options
 
 **v1.2** July 2014
 
