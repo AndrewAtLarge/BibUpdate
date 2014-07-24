@@ -26,24 +26,24 @@ Copyright (C) 2012-14
 """
 
 # Metadata - used in setup.py
-__author__='Andrew Mathas',
-__author_email__='andrew.mathas@gmail.com',
-__description__='Automatically update the entries of a bibtex file using mrlookup/MathSciNet',
-__keywords__='bibtex, mrlookup, MathSciNet, latex',
+__author__='Andrew Mathas'
+__author_email__='andrew.mathas@gmail.com'
+__description__='Automatically update the entries of a bibtex file'
+__keywords__='bibtex, mrlookup, MathSciNet, latex'
 __license__='GNU General Public License, Version 3, 29 June 2007'
-__url__='https://bitbucket.org/AndrewsBucket/bibupdate',
-__version__=1.5
+__url__='https://bitbucket.org/AndrewsBucket/bibupdate'
+__version__=1.3
 
+# for command line option
 bibupdate_version=r'''
 %(prog)s version {version}: update entries in a bibtex file
 {license}
 '''.format(version=__version__, license=__license__)
 
 ######################################################
-import argparse, os, re, shutil, sys, urllib, __builtin__
+import argparse, os, re, shutil, sys, textwrap, urllib, __builtin__
 from collections import OrderedDict
 from fuzzywuzzy import fuzz
-from textwrap import wrap
 
 # global options, used mainly for printing
 global options, verbose, warning, debugging, fix_fonts, wrapped
@@ -131,6 +131,7 @@ def good_match(one,two):
     """
     return fuzz.ratio(remove_tex.sub('',one).lower(), remove_tex.sub('',two).lower())>90
 
+# overkill for "type checking" of the wrap length command line option
 class NonnegativeIntegers(__builtin__.list):
     r"""
     A class that gives an easy test for positive integers::
@@ -381,7 +382,7 @@ def process_options():
     parser.add_argument('-f','--font_replace',action='store_false', default=True,
                         help='do NOT replace fonts \Bbb, \germ and \scr')
     parser.add_argument('-i','--ignored-fields',type=str,default=['coden','mrreviewer','fjournal','issn'],
-                        metavar='IGNORE', action='append',help='a string of bibtex fields to ignore')
+                        metavar='FIELDS', action='append',help='a string of bibtex fields to ignore')
     parser.add_argument('-l','--log', default=sys.stdout, type=argparse.FileType('w'),
                         help='log messages to specified file (defaults to stdout)')
 
@@ -416,7 +417,7 @@ def process_options():
 
     # define word wrapping when requested
     if options.wrap!=0:
-        wrapped=lambda field: '\n'.join(wrap(field,options.wrap,subsequent_indent='\t'))
+        wrapped=lambda field: '\n'.join(textwrap.wrap(field,options.wrap,subsequent_indent='\t'))
     else:
         wrapped=lambda field: field
 

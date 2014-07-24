@@ -4,7 +4,7 @@ bibupdate
 
 **Usage**: 
 
-usage: bibupdate [-h] [-a] [-c] [-f] [-i IGNORE] [-l LOG] [-m | -M] [-q] [-r]
+usage: bibupdate [-h] [-a] [-c] [-f] [-i FIELDS] [-l LOG] [-m | -M] [-q] [-r]
                  [-w LEN] bibtexfile [outputfile]
 
 This is a command line tool for updating the entries in a BibTeX_ file using
@@ -18,12 +18,12 @@ disable future checking of an entry by giving it an empty ``mrnumber`` field).
   -c, --check_all       check all bibtex entries against a database
   -f, --font_replace    do NOT replace fonts \Bbb, \germ and \scr
   -h, --help            show this help message and exit
-  -i IGNORE, --ignored-fields IGNORE
+  -i FIELDS, --ignored-fields FIELDS
                         a string of bibtex fields to ignore
   -l LOG, --log LOG     log messages to specified file (defaults to stdout)
   -q, --quietness       print fewer messages
   -r  --replace         replace existing bibtex file
-  -w {}, --wrap {}      wrap bibtex fields to specified width
+  -w LEN --wrap LEN     wrap bibtex fields to specified width
 
   -m, --mrlookup        use mrlookup to update bibtex entries (default)
   -M, --mathscinet      use mathscinet to update bibtex entries (less flexible)
@@ -84,8 +84,8 @@ BibTeX_ file over the years (for example, incorrect page numbers and publication
 years). Now I use the program to automatically update the preprint entries in my
 database when the papers appear in MathSciNet_ after they are published.
 
-Options and their defaults
---------------------------
+Options and defaults
+--------------------
 
 -a, --all  Update or validate ALL BibTeX entries
 
@@ -112,7 +112,7 @@ Options and their defaults
 
   The -f option *disables* these substitutions.
 
--i IGNORE, --ignored-fields=IGNORE  A string of BibTeX_ fields to ignore when writing the updated file
+-i FIELDS, --ignored-fields=FIELDS  A string of BibTeX_ fields to ignore when writing the updated file
 
   By default bibupdate_ removes the following fields from each BibTeX_ entry:
 
@@ -191,7 +191,7 @@ Options and their defaults
   the original BibTeX_ is made with a .bak extension. it is also possible to
   specify the output filename as the last argument to bibupdate.
 
--w WRAP_LEN --wrap WRAP_LEN    wrap bibtex fields to specified width
+-w LEN --wrap LEN    wrap bibtex fields to specified width
 
   Limits the maximum line length in the output BibTeX_ file. In theory this is
   supposed to make it easier to compare the updated BibTeX_ file with the
@@ -199,6 +199,10 @@ Options and their defaults
 
 Known issues
 ------------
+
+\bibupdate_ reads BibTeX_ files using a small number of regular expressions so
+there may be be some corner cases where it fails to extract all of the field
+entries.
 
 There are a small number of cases where bibupdate_ fails to correctly identify
 papers that are listed in MathSciNet_. These failures occur for the following
@@ -248,16 +252,22 @@ To do
 =====
 
 - More intelligent searches using MathSciNet_.
+- Add an rc file?
+- Fix the wrapping of bibtex fields.
 - Interface to the arXiv_? In principle, this is easy to do although,
   ultimately, it would probably not work because the arXiv_ blocks frequent
   requests from the same IP address in order to discourage robots.
 
-AUTHOR
+Author
 ======
 
 `Andrew Mathas`_
 
+<<<<<<< HEAD
 bibupdate_ Version 1.5. Copyright (C) 2012-14 
+=======
+bibupdate_ Version 1.3. Copyright (C) 2012-14 
+>>>>>>> release-1.3
 
 GNU General Public License, Version 3, 29 June 2007
 
