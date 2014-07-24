@@ -101,9 +101,13 @@ bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incolle
                   'mastersthesis', 'misc', 'phdthesis', 'proceedings', 'techreport', 'unpublished']
 
 # need to massage some of the font specifications returned by mrlookup to "standard" latex fonts.
-replace_fonts=[ ('mathbb', re.compile(r'\\Bbb (\w)'), re.compile(r'\\Bbb\s*({\w*})')),
-                ('mathcal', re.compile(r'\\scr (\w)'), re.compile(r'\\scr\s*({\w*})')),
-                ('mathfrak', re.compile(r'\\germ (\w)'), re.compile(r'\\germ\s*{(\w*)}'))
+replacement_fonts={ 'Bbb':'mathbb', 
+                'scr' :'mathcal', 
+                'germ':'mathfrak' 
+}
+# generate regular expressions to do the two matches 
+replace_fonts=[ re.compile(r'\\(%s)\s*(\w)' % '|'.join('%s'%f for f in replacement_fonts.keys())),
+                re.compile(r'\\(%s)\s*{(\w*)}' % '|'.join('%s'%f for f in replacement_fonts.keys()))
 ]
 def font_replace(string):
     r"""
@@ -116,7 +120,8 @@ def font_replace(string):
         - \scr X*  --> \mathcal{X*}
         - \germ X* --> \mathfrak{X*}
     """
-    new_string=''
+    rep_s=replace_fonts[0].sub(lambda match : r'\%s{%s}' % (replacement_fonts[match.group(1)],match.group(2)), string)
+    return replace_fonts[1].sub(lambda match : r'\%s{%s}' % (replacement_fonts[match.group(1)],match.group(2)), rep_s)
     last=0
     for rep in replace_fonts:
         string=rep[1].sub(r'\\%s{\1}'%rep[0], string)   # eg. \Bbb C    --> \mathbb{C}
@@ -220,9 +225,9 @@ class Bibtex(OrderedDict):
                 else:
                     self[lkey]=val
 
-        # try to guess whether this entry corresponds to a preprint
-        self.is_preprint=( (self.has_key('pages') and self['pages'].lower() in ['preprint', 'to appear', 'in preparation'])
-                  or not (self.has_key('pages') and self.has_key('journal')) )
+            # try to guess whether this entry corresponds to a preprint
+            self.is_preprint=( (self.has_key('pages') and self['pages'].lower() in ['preprint', 'to appear', 'in preparation'])
+                      or not (self.has_key('pages') and self.has_key('journal')) )
 
     def __str__(self):
         r"""

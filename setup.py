@@ -25,6 +25,7 @@ setup(name='bibupdate',
           'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
           'Natural Language :: English',
           'Programming Language :: Python :: 2.7',
+          'Topic :: Text Processing',
           'Topic :: Text Processing :: Markup :: LaTeX',
           'Topic :: Utilities'
       ],
