@@ -28,22 +28,17 @@ Copyright (C) 2012-14
 # Metadata - used in setup.py
 __author__='Andrew Mathas'
 __author_email__='andrew.mathas@gmail.com'
-__description__='Automatically update the entries of a bibtex file'
+__description__='update the entries of a bibtex file'
 __keywords__='bibtex, mrlookup, MathSciNet, latex'
 __license__='GNU General Public License, Version 3, 29 June 2007'
-<<<<<<< HEAD
-__url__='https://bitbucket.org/AndrewsBucket/bibupdate',
-__version__=1.5
-=======
 __url__='https://bitbucket.org/AndrewsBucket/bibupdate'
-__version__='1.3'
->>>>>>> release-1.3
+__version__='1.3dev'
 
 # for command line option
 bibupdate_version=r'''
-%(prog)s version {version}: update entries in a bibtex file
-{license}
-'''.format(version=__version__, license=__license__)
+%(prog)s version {__version__}: {__description__}
+{__license__}
+'''.format( **globals() )
 
 ######################################################
 import argparse, os, re, shutil, sys, textwrap, urllib, __builtin__
@@ -76,19 +71,26 @@ def bib_error(*args):
         sys.stderr.write(a+'\n')
     sys.exit(2)
 
-# exit gracefully after control-C
-OriginalExceptHook = sys.excepthook
-def NewExceptHook(type, value, traceback):
+def CleanExceptHook(type, value, traceback):
     r"""
-    Exit cleanly when program is killed.
+    Exit cleanly when program is killed, or jump into pdb if debugging
     """
     if type == KeyboardInterrupt:
         bib_error('program killed. Exiting...')
+    elif (options.debugging==0 or hasattr(sys, 'ps1') or not sys.stdin.isatty()
+            or not sys.stdout.isatty() or not sys.stderr.isatty() 
+            or issubclass(type, bdb.BdbQuit) or issubclass(type, SyntaxError)):
+        sys.__excepthook__(type, value, traceback)
     else:
-        OriginalExceptHook(type, value, traceback)
+        import traceback, pdb
+        # we are NOT in interactive mode, print the exception...
+        traceback.print_exception(type, value, tb)
+        print
+        # ...then start the debugger in post-mortem mode.
+        pdb.pm()
 
 # ...and a hook to grab the exception
-sys.excepthook = NewExceptHook
+sys.excepthook = CleanExceptHook
 
 ##########################################################
 
@@ -102,31 +104,30 @@ remove_mathematics=re.compile(r'\$[^\$]+\$')  # assume no nesting
 clean_title=lambda title: remove_tex.sub('',remove_mathematics.sub('',title))
 
 # to help in checking syntax define recognised/valid types of entries in a bibtex database
-bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incollection', 'inproceedings', 'manual',
-                  'mastersthesis', 'misc', 'phdthesis', 'proceedings', 'techreport', 'unpublished']
+bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incollection', 
+                  'inproceedings', 'manual', 'mastersthesis', 'misc', 'phdthesis', 
+                  'proceedings', 'techreport', 'unpublished'
+]
 
 # need to massage some of the font specifications returned by mrlookup to "standard" latex fonts.
-replace_fonts=[ ('mathbb', re.compile(r'\\Bbb (\w)'), re.compile(r'\\Bbb\s*({\w*})')),
-                ('mathcal', re.compile(r'\\scr (\w)'), re.compile(r'\\scr\s*({\w*})')),
-                ('mathfrak', re.compile(r'\\germ (\w)'), re.compile(r'\\germ\s*{(\w*)}'))
-]
-def font_replace(string):
+fonts_to_replace={ 'Bbb':'mathbb', 
+                    'scr' :'mathcal', 
+                    'germ':'mathfrak' 
+}
+# a factory regular expression to replace expressions like \scr C and \scr{ Cat} in one hit
+font_replacer=re.compile(r'\\(%s)\s*(?:(\w)|\{([\s\w]*)\})' % '|'.join('%s'%f for f in fonts_to_replace.keys()))
+def replace_fonts(string):
     r"""
     Return a new version of `string` with various fonts commands replaced with
     their more standard LaTeX variants.
 
     Currently::
 
-        - \Bbb X*  --> \mathbb{X*}
-        - \scr X*  --> \mathcal{X*}
-        - \germ X* --> \mathfrak{X*}
+        - \Bbb X   and \BBb {X*}  --> \mathbb{X*}
+        - \scr X*  and \scr {X*}  --> \mathcal{X*}
+        - \germ X* and \germ{X*}  --> \mathfrak{X*}
     """
-    new_string=''
-    last=0
-    for rep in replace_fonts:
-        string=rep[1].sub(r'\\%s{\1}'%rep[0], string)   # eg. \Bbb C    --> \mathbb{C}
-        string=rep[2].sub(r'\\%s{\1}'%rep[0], string)   # eg. \germ{sl} --> \mthfrak{sl}
-    return string
+    return font_replacer.sub(lambda match : r'\%s{%s}' % (fonts_to_replace[match.group(1)],match.group(2) or match.group(3)), string)
 
 def good_match(one,two):
     r"""
@@ -225,9 +226,9 @@ class Bibtex(OrderedDict):
                 else:
                     self[lkey]=val
 
-        # try to guess whether this entry corresponds to a preprint
-        self.is_preprint=( (self.has_key('pages') and self['pages'].lower() in ['preprint', 'to appear', 'in preparation'])
-                  or not (self.has_key('pages') and self.has_key('journal')) )
+            # try to guess whether this entry corresponds to a preprint
+            self.is_preprint=( (self.has_key('pages') and self['pages'].lower() in ['preprint', 'to appear', 'in preparation'])
+                      or not (self.has_key('pages') and self.has_key('journal')) )
 
     def __str__(self):
         r"""
@@ -384,8 +385,8 @@ def process_options():
                         help='update or validate ALL BibTeX entries')
     parser.add_argument('-c','--check-all',action='store_true', default=False,
                         help='check all bibtex entries against a database')
-    parser.add_argument('-f','--font_replace',action='store_false', default=True,
-                        help='do NOT replace fonts \Bbb, \germ and \scr')
+    parser.add_argument('-k','--keep_fonts',action='store_true', default=False,
+                        help='do NOT replace fonts \Bbb, \germ and \scr in titles')
     parser.add_argument('-i','--ignored-fields',type=str,default=['coden','mrreviewer','fjournal','issn'],
                         metavar='FIELDS', action='append',help='a string of bibtex fields to ignore')
     parser.add_argument('-l','--log', default=sys.stdout, type=argparse.FileType('w'),
@@ -398,16 +399,16 @@ def process_options():
     lookup.add_argument('-M','--mathscinet',action='store_const',const='mathscinet',dest='lookup',
                         help='use mathscinet to update bibtex entries (less flexible)')
 
-    parser.add_argument('-q','--quietness',action='count', default=2,
+    parser.add_argument('-o','--overwrite',action='store_true', default=False,
+                        help='overwrite existing bibtex file')
+    parser.add_argument('-q','--quieter',action='count', default=2,
                         help='printer fewer messages')
-    parser.add_argument('-r','--replace',action='store_true', default=False,
-                        help='replace existing bibtex file')
     parser.add_argument('-w','--wrap',type=int, default=0, action='store', choices=NonnegativeIntegers(),
                         metavar='LEN', help='wrap bibtex fields to specified width')
 
     # suppress printing of these two options
     parser.add_argument('--version',action='version', version=bibupdate_version, help=argparse.SUPPRESS)
-    parser.add_argument('-d','--debugging',action='store_true', default=False, help=argparse.SUPPRESS)
+    parser.add_argument('-d','--debugging',action='count', default=0, help=argparse.SUPPRESS)
 
     # parse the options
     options = parser.parse_args()
@@ -427,16 +428,20 @@ def process_options():
         wrapped=lambda field: field
 
     # define debugging, verbose and warning functions
-    if options.debugging:
-        options.quietness=2
+    if options.debugging>0:
+        options.quieter=2
         debugging=bib_print
+        if options.debugging==4:
+            # start pudb
+            import pudb
+            pu.db
     else:
         debugging=lambda *arg: None
-    verbose=bib_print if options.quietness==2 else lambda *arg: None
-    warning=bib_print if options.quietness>=1 else lambda *arg: None
+    verbose=bib_print if options.quieter==2 else lambda *arg: None
+    warning=bib_print if options.quieter>=1 else lambda *arg: None
 
     # a shorthand for fixed the fonts (to avoid an if-statement when calling it)
-    fix_fonts=font_replace if options.font_replace else lambda title: title
+    fix_fonts=replace_fonts if not options.keep_fonts else lambda title: title 
 
 def main():
     r"""
@@ -458,7 +463,7 @@ def main():
     if options.check_all:
         options.check_all=True
     else:
-        if options.replace:
+        if options.overwrite:
             newfile=options.filename.name  # will be backed up below
         elif options.outputfile is None:
             # write updates to 'updated_'+filename
