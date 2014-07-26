@@ -110,9 +110,9 @@ bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incolle
 ]
 
 # need to massage some of the font specifications returned by mrlookup to "standard" latex fonts.
-fonts_to_replace={ 'Bbb':'mathbb', 
-                    'scr' :'mathcal', 
-                    'germ':'mathfrak' 
+fonts_to_replace={ 'Bbb' :'mathbb', 
+                   'scr' :'mathcal', 
+                   'germ':'mathfrak' 
 }
 # a factory regular expression to replace expressions like \scr C and \scr{ Cat} in one hit
 font_replacer=re.compile(r'\\(%s)\s*(?:(\w)|\{([\s\w]*)\})' % '|'.join('%s'%f for f in fonts_to_replace.keys()))
@@ -175,8 +175,8 @@ class Bibtex(OrderedDict):
     mathscient...perhaps we should be using pyquery or beautiful soup for the
     latter, but these regular expressions are certainly effective.
     """
-    # Regular expression to extract a bibtex entry from a string. We assume that
-    # the pub_type is a word in [A-Za-z]* an allow the citation key and the
+    # A regular expression to extract a bibtex entry from a string. We assume that
+    # the pub_type is a word in [A-Za-z]* and allow the citation key and the
     # contents of the bibtex entry to be fairly arbitrary and of the form: {cite_key, *}.
     parse_bibtex_entry=re.compile(r'@(?P<pub_type>[A-Za-z]*)\s*\{\s*(?P<cite_key>\S*)\s*,\s*?(?P<keys_and_vals>.*\})[,\s]*\}', re.MULTILINE|re.DOTALL)
 
@@ -184,7 +184,7 @@ class Bibtex(OrderedDict):
     # signs because otherwise we are unable to cope with = inside a bibtex field.
     keys_and_vals=re.compile(r'\s*=\s*')
 
-    # Regular expression to extract pairs of keys and values from a bibtex
+    # A regular expression to extract pairs of keys and values from a bibtex
     # string. The syntax here is very lax: we assume that bibtex fields do not
     # contain the string '={'.  From the AMS the format of a bibtex entry is
     # much more rigid but we cannot assume that an arbitrary bibtex file will
@@ -193,7 +193,7 @@ class Bibtex(OrderedDict):
     # single word.
     bibtex_keys=re.compile(r'([A-Za-z]+)=(?:\{((?:[^=]|=(?!\{))+)\}|(\w+)),?\s*$', re.MULTILINE|re.DOTALL)
 
-    # Regular expression for extracting page numbers: <first page>-*<last page>
+    # A regular expression for extracting page numbers: <first page>-*<last page>
     # or simply <page>.
     page_nums=re.compile('(?P<apage>[0-9]*)-+(?P<zpage>[0-9]*)')
 
