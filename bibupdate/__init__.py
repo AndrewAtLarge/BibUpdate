@@ -131,11 +131,10 @@ def replace_fonts(string):
 
 def good_match(one,two):
     r"""
-    Returns True or False depending on whether or not the strings one and two
-    are a good (fuzzy) match for each other. First we strip out some latex
-    characters.
+    Returns True or False depending on whether or not the lower cased strings
+    `one` and `two` are a good (fuzzy) match for each other.
     """
-    return fuzz.ratio(remove_tex.sub('',one).lower(), remove_tex.sub('',two).lower())>90
+    return fuzz.ratio(one.lower(), two.lower())>90
 
 # overkill for "type checking" of the wrap length command line option
 class NonnegativeIntegers(__builtin__.list):
