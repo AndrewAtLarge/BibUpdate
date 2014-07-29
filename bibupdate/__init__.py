@@ -217,15 +217,17 @@ class Bibtex(OrderedDict):
             self.cite_key=entry.group('cite_key').strip()
             keys_and_vals=self.keys_and_vals.sub('=',entry.group('keys_and_vals'))   # remove spaces around = 
             for (key,val,word) in self.bibtex_keys.findall(keys_and_vals):
-                if val=='': val=word      # val matches {value} whereas word matches word
-                val=' '.join(val.split()) # remove any internal space from val
-                lkey=key.lower()          # keys always in lower case
+                if val=='': 
+                    val=word                  # val matches {value} whereas word matches word
+                else:
+                    val=' '.join(val.split()) # remove any internal space from val
+                lkey=key.lower()              # keys always in lower case
                 if lkey=='title':
-                    self[lkey]=fix_fonts(val)
+                    self[lkey]=fix_fonts(val) # only fix fonts in the title, others assumed OK
                 else:
                     self[lkey]=val
 
-            # try to guess whether this entry corresponds to a preprint
+            # guess whether this entry corresponds to a preprint
             self.is_preprint=( (self.has_key('pages') and self['pages'].lower() in ['preprint', 'to appear', 'in preparation'])
                       or not (self.has_key('pages') and self.has_key('journal')) )
 
