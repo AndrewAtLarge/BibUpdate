@@ -32,6 +32,5 @@ setup(name='bibupdate',
 
       install_requires=install_requires,
 
-      packages=['bibupdate'],
       entry_points={'console_scripts': ['bibupdate = bibupdate:main', ],},
 )
