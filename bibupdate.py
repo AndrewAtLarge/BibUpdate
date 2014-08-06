@@ -28,7 +28,7 @@ Copyright (C) 2012-14
 # Metadata - used in setup.py
 __author__='Andrew Mathas'
 __author_email__='andrew.mathas@gmail.com'
-__description__='update the entries of a bibtex file'
+__description__='Update the entries of a bibtex file'
 __keywords__='bibtex, mrlookup, MathSciNet, latex'
 __license__='GNU General Public License, Version 3, 29 June 2007'
 __url__='https://bitbucket.org/AndrewsBucket/bibupdate'

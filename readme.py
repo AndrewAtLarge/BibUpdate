@@ -1,4 +1,7 @@
-=========
+# By automatically generating the README file as part of setup we don't need to
+# hardcode version numbers etc.
+
+readme_text=r'''=========
 bibupdate
 =========
 
@@ -104,9 +107,9 @@ Options and defaults
   these fonts specifications are automatically changed to the following more
   LaTeX_ friendly fonts:
 
-        - \\Bbb X  --> \\mathbb{X}
-        - \\scr X  --> \\mathcal{X}
-        - \\germ X --> \\mathfrak{X}
+        - \\Bbb X  --> \\mathbb{{X}}
+        - \\scr X  --> \\mathcal{{X}}
+        - \\germ X --> \\mathfrak{{X}}
 
   By using the -k option the fonts specification used by MathSciNet are used.
 
@@ -262,7 +265,7 @@ Author
 
 `Andrew Mathas`_
 
-bibupdate_ Version 1.3dev. Copyright (C) 2012,14 
+bibupdate_ Version {__version__}. Copyright (C) 2012,14 
 
 GNU General Public License, Version 3, 29 June 2007
 
@@ -278,7 +281,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 .. _`Andrew Mathas`: http://www.maths.usyd.edu.au/u/mathas/
 .. _arXiv: http://arxiv.org/
 .. _BibTeX: http://www.bibtex.org/
-.. _bibupdate: https://bitbucket.org/AndrewsBucket/bibupdate
+.. _bibupdate: {__url__}
 .. _download: http://bitbucket.org/AndrewsBucket/bibupdate/downloads/
 .. _GPL: http://www.gnu.org/licenses/gpl.html
 .. _hyperref: http://www.ctan.org/pkg/hyperref
@@ -286,3 +289,4 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 .. _MathSciNet: http://www.ams.org/mathscinet/
 .. _mrlookup: http://www.ams.org/mrlookup
 .. _Python: https://www.python.org/
+'''
