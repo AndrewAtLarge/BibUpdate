@@ -9,9 +9,8 @@ if sys.version_info[:2] < (2, 7):
 
 # generate the README file
 if 'readme' in sys.argv:
-    from readme import readme_text
     with open('README.rst','w') as rst_readme:
-      rst_readme.write(readme_text.format( **bibupdate.__dict__ ))
+      rst_readme.write(bibupdate.readme_text.format( **bibupdate.__dict__ ))
     # now create the latex and pdf versions of the documentation in the doc directory
     from subprocess import call
     preamble=r'''\usepackage[a4paper,margin=15mm]{{geometry}}
