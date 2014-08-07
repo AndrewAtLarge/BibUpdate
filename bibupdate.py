@@ -43,7 +43,6 @@ bibupdate_version=r'''
 ######################################################
 import argparse, os, re, shutil, sys, textwrap, urllib, __builtin__
 from collections import OrderedDict
-from fuzzywuzzy import fuzz
 
 # global options, used mainly for printing
 global options, verbose, warning, debugging, fix_fonts, wrapped
@@ -129,12 +128,22 @@ def replace_fonts(string):
     """
     return font_replacer.sub(lambda match : r'\%s{%s}' % (fonts_to_replace[match.group(1)],match.group(2) or match.group(3)), string)
 
-def good_match(one,two):
-    r"""
-    Returns True or False depending on whether or not the lower cased strings
-    `one` and `two` are a good (fuzzy) match for each other.
-    """
-    return fuzz.ratio(one.lower(), two.lower())>90
+try:
+    from fuzzywuzzy import fuzz
+    def good_match(one,two):
+        r"""
+        Returns True or False depending on whether or not the lower cased strings
+        `one` and `two` are a good (fuzzy) match for each other.
+        """
+        return fuzz.ratio(one.lower(), two.lower())>90
+except ImportError:
+    warning('\n'.join(['# WARNING: fuzzywuzzy not installed so unable to check for fuzzy'
+            '# matching of titles. Consider running'
+            '#     pip install fuzzywuzzy'
+            ]))
+    def good_match(one,two):
+        return True
+
 
 # overkill for "type checking" of the wrap length command line option
 class NonnegativeIntegers(__builtin__.list):

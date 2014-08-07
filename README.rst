@@ -2,7 +2,7 @@
 bibupdate
 =========
 
-Update the entries of a bibtex file
+Automatically update the entries of a bibtex file
 
 usage: bibupdate [-h] [-a] [-c] [-f] [-i FIELDS] [-l LOG] [-m | -M] [-q] [-r]
                  [-w LEN] bibtexfile [outputfile]
