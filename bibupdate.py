@@ -23,7 +23,7 @@
 # Andrew Mathas andrew.mathas@gmail.com
 # Copyright (C) 2012, 2014 
 
-# Metadata - used in setup.py
+# Meta data - used to dynamically create the __doc__ string and by setup.py
 meta_data={
     'author'       : 'Andrew Mathas',
     'author_email' : 'andrew.mathas@gmail.com',
@@ -49,7 +49,7 @@ bibupdate
 
 {description}
 
-usage: bibupdate [-h] [-a] [-c] [-f] [-i FIELDS] [-l LOG] [-m | -M] [-q] [-r]
+usage: bibupdate [-h|-H] [-a] [-c] [-f] [-i FIELDS] [-l LOG] [-m | -M] [-q] [-r]
                  [-w LEN] bibtexfile [outputfile]
 
 This is a command line tool for updating the entries in a BibTeX_ file using
@@ -60,9 +60,10 @@ disable future checking of an entry by giving it an empty ``mrnumber`` field).
 **Options**::
 
   -a, --all             update or validate ALL BibTeX entries
-  -c, --check_all       check all bibtex entries against a database
+  -c, --check_all       check/verify all bibtex entries against a database
   -k, --keep_fonts      do NOT replace fonts \Bbb, \germ and \scr in titles
   -h, --help            show this help message and exit
+  -H, --Help            print full program description
   -i FIELDS, --ignored-fields FIELDS
                         a string of bibtex fields to ignore
   -l LOG, --log LOG     log messages to specified file (defaults to stdout)
@@ -683,13 +684,15 @@ def process_options():
     parser = argparse.ArgumentParser(description='Update and validate BibTeX files',
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('bibtexfile',type=argparse.FileType('r'),help='bibtex file to update')
+    parser.add_argument('bibtexfile',nargs='?',type=argparse.FileType('r'),default=None,help='bibtex file to update')
     parser.add_argument('outputfile',nargs='?',type=str,default=None,help='output file')
 
+    parser.add_argument('-H','--Help',action='store_true', default=False,
+                        help='print full program description')
     parser.add_argument('-a','--all',action='store_true',default=False,
                         help='update or validate ALL BibTeX entries')
     parser.add_argument('-c','--check-all',action='store_true', default=False,
-                        help='check all bibtex entries against a database')
+                        help='check/verify all bibtex entries against database')
     parser.add_argument('-k','--keep_fonts',action='store_true', default=False,
                         help='do NOT replace fonts \Bbb, \germ and \scr in titles')
     parser.add_argument('-i','--ignored-fields',type=str,default=['coden','mrreviewer','fjournal','issn'],
@@ -718,6 +721,14 @@ def process_options():
     # parse the options
     options = parser.parse_args()
     options.prog=parser.prog
+
+    if options.Help:
+        # print documentation and exit
+        bib_print(__doc__)
+        sys.exit()
+    elif options.bibtexfile==None:
+        biberror('no bibtex file specified')
+
     if len(options.ignored_fields)>4:
         # if any fields were added then don't ignore the first 4 fields.
         options.ignored_fields=list(chain.from_iterable([i.lower().split() for i in options.ignored_fields[4:]]))
@@ -754,11 +765,10 @@ def main():
     """
     process_options()
 
-    # now we are ready to open the existing BibTeX file and start working
+    # now we are ready to read the BibTeX file and start working
     try:
-        bibfile=open(options.bibtexfile.name,'r')
-        papers=bibfile.read()
-        bibfile.close()
+        papers=options.bibtexfile.read()  # file opened by argparse
+        options.bibtexfile.close()
         asterisk=papers.index('@')
     except IOError:
         bib_error('unable to open bibtex file %s' % options.bibtexfile.name)
