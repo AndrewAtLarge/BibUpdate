@@ -1,4 +1,12 @@
-**v1.3** - 
+**v2.0** - TBA
+
+* Added arXiv search(todo)
+* Added rc file (todo)
+* Added preserved bibtex fields (todo)
+* Added multiple look-up searches (todo)
+* Made compatible with ctan distribution (todo)
+
+**v1.3** - August 2014
 
 * Generate README files (rst, tex, pdf) from main program
 * Add support for uploading to ctan

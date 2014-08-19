@@ -46,7 +46,7 @@ bibup=MetaData(
     license      = 'GNU General Public License, Version 3, 29 June 2007',
     name         = 'bibupdate',
     url          = 'https://bitbucket.org/AndrewsBucket/bibupdate',
-    version      = '1.3'
+    version      = '2.0dev'
 )
 
 # version number of command line help message
@@ -438,7 +438,8 @@ def process_options():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('bibtexfile',nargs='?',type=argparse.FileType('r'),default=None,help='bibtex file to update')
-    parser.add_argument('outputfile',nargs='?',type=str,default=None,help='output file')
+    parser.add_argument('outputfile',nargs='?',type=str,default=None,
+                        help='output file')
 
     parser.add_argument('-H','--Help',action='store_true', default=False,
                         help='print full program description')
@@ -583,8 +584,7 @@ bibupdate
 
 {description}
 
-usage: bibupdate [-h|-H] [-a] [-c] [-f] [-i FIELDS] [-l LOG] [-m | -M] [-q] [-r]
-                 [-w LEN] bibtexfile [outputfile]
+usage: bibupdate [-h|-H] [-a] [-c] [-f] [-i FIELDS] [-l LOG] [-m | -M] [-q] [-r] [-w LEN] bibtexfile [outputfile]
 
 This is a command line tool for updating the entries in a BibTeX_ file using
 mrlookup_. By default bibupdate_ tries to update the entry for each paper
@@ -832,11 +832,11 @@ To do
 
 - Add interface to the arXiv_ using http://arxiv.org/help/api 
   or http://arxiv.org/help/oa.
-- Add flag to stop add list of fields that should not be changed
+- Add flag for add list of fields that should not be changed
+- Add an rc file?
 - More intelligent searches using MathSciNet_
 - Add lookup using MRef and, when an entry is not found, allow additional
   searches
-- Add an rc file?
 - Fix the wrapping of bibtex fields.
 
 Author
