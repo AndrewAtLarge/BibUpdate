@@ -833,13 +833,12 @@ To do
 =====
 
 - More intelligent searches using MathSciNet_.
-- Add lookups using MRef and, when an entry is not found, allow additional
+- Add lookup using MRef and, when an entry is not found, allow additional
   searches
 - Add an rc file?
 - Fix the wrapping of bibtex fields.
-- Interface to the arXiv_? In principle, this is easy to do although,
-  ultimately, it would probably not work because the arXiv_ blocks frequent
-  requests from the same IP address in order to discourage robots.
+- Add interface to the arXiv_ using http://arxiv.org/help/api 
+  or http://arxiv.org/help/oa.
 
 Author
 ======
@@ -848,7 +847,7 @@ Author
 
 bibupdate_ Version {version}. Copyright (C) 2012,14 
 
-GNU General Public License, Version 3, 29 June 2007
+{license}
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU_General Public License (GPL_) as published by the Free
