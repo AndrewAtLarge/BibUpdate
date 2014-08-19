@@ -58,6 +58,7 @@ elif 'ctan' in sys.argv:
     with open('bibupdate.ctan','w') as ctan:
         ctan.write( ctan_specs.format(**bibupdate.bibup) )
     print('To upload to ctan run: ctanupload -F bibupdate.ctan')
+
 else:
     setup(name=bibupdate.bibup['name'],
           author=bibupdate.bibup['author'],

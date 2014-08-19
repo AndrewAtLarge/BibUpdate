@@ -349,7 +349,7 @@ class Bibtex(OrderedDict):
             match=matches[0]
             differences=[key for key in match if key not in options.ignored_fields and self[key]!=match[key]]
             if differences!=[] and any(self[key]!='' for k in differences):
-                if options.check_all:
+                if options.check:
                     bib_print('%s\n%s=%s\n%s' % ('='*30, self.cite_key, self['title'][:50],
                                   '\n'.join(' %s: %s\n%s-> %s'%(key,self[key], ' '*len(key), match[key]) 
                                         for key in differences)))
@@ -444,7 +444,7 @@ def process_options():
                         help='print full program description')
     parser.add_argument('-a','--all',action='store_true',default=False,
                         help='update or validate ALL BibTeX entries')
-    parser.add_argument('-c','--check-all',action='store_true', default=False,
+    parser.add_argument('-c','--check',action='store_true', default=False,
                         help='check/verify all bibtex entries against database')
     parser.add_argument('-k','--keep_fonts',action='store_true', default=False,
                         help='do NOT replace fonts \Bbb, \germ and \scr in titles')
@@ -486,8 +486,8 @@ def process_options():
         # if any fields were added then don't ignore the first 4 fields.
         options.ignored_fields=list(chain.from_iterable([i.lower().split() for i in options.ignored_fields[4:]]))
 
-    # if check_all==True then we want to check everything
-    if options.check_all:
+    # if check==True then we want to check everything
+    if options.check:
         options.all=True
 
     # define word wrapping when requested
@@ -529,9 +529,7 @@ def main():
 
     # if we are checking for errors then we check EVERYTHING but, in this case,
     # we don't need to create a new bibtex file
-    if options.check_all:
-        options.check_all=True
-    else:
+    if not options.check:
         if options.overwrite:
             newfile=options.filename.name  # will be backed up below
         elif options.outputfile is None:
@@ -565,10 +563,10 @@ def main():
                 getattr(bt, options.lookup)()  # call lookup program
 
         # now write the new (and hopefully) improved entry
-        if not options.check_all:
+        if not options.check:
             newbibfile.write('%s\n\n' % bt)
 
-    if not options.check_all:
+    if not options.check:
         newbibfile.close()
 
 ##############################################################################
@@ -596,7 +594,7 @@ disable future checking of an entry by giving it an empty ``mrnumber`` field).
 **Options**::
 
   -a, --all             update or validate ALL BibTeX entries
-  -c, --check_all       check/verify all bibtex entries against a database
+  -c, --check           check/verify all bibtex entries against a database
   -k, --keep_fonts      do NOT replace fonts \Bbb, \germ and \scr in titles
   -h, --help            show this help message and exit
   -H, --Help            print full program description
@@ -675,7 +673,7 @@ Options and defaults
   database if the entry does *not* have an ``mrnumber`` field. With this switch
   all entries are checked and updated.
 
--c --check_all  Check/validate all bibtex entries against a database
+-c --check      Check/validate all bibtex entries against a database
 
   Prints a list of entries in the BibTeX file that have fields different from
   those given by the corresponding database. The original BibTeX file is not
@@ -723,7 +721,7 @@ Options and defaults
   possible when mrlookup_ is used. It is also possible to update BibTeX_
   entries using MathSciNet_, however, these searches are currently only possible
   using the ``mrnumber`` field (so this option only does something if combined
-  with the --all option or the -check-all-option).
+  with the --all option or the -check option).
 
 -o  --overwrite  Overwrite the existing bibtex file with the updated version
 
