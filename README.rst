@@ -16,7 +16,7 @@ disable future checking of an entry by giving it an empty ``mrnumber`` field).
 **Options**::
 
   -a, --all             update or validate ALL BibTeX entries
-  -c, --check_all       check/verify all bibtex entries against a database
+  -c, --check           check/verify all bibtex entries against a database
   -k, --keep_fonts      do NOT replace fonts \Bbb, \germ and \scr in titles
   -h, --help            show this help message and exit
   -H, --Help            print full program description
@@ -95,7 +95,7 @@ Options and defaults
   database if the entry does *not* have an ``mrnumber`` field. With this switch
   all entries are checked and updated.
 
--c --check_all  Check/validate all bibtex entries against a database
+-c --check      Check/validate all bibtex entries against a database
 
   Prints a list of entries in the BibTeX file that have fields different from
   those given by the corresponding database. The original BibTeX file is not
@@ -143,7 +143,7 @@ Options and defaults
   possible when mrlookup_ is used. It is also possible to update BibTeX_
   entries using MathSciNet_, however, these searches are currently only possible
   using the ``mrnumber`` field (so this option only does something if combined
-  with the --all option or the -check-all-option).
+  with the --all option or the -check option).
 
 -o  --overwrite  Overwrite the existing bibtex file with the updated version
 
@@ -252,20 +252,21 @@ problems and I may implement feature requests.
 To do
 =====
 
-- More intelligent searches using MathSciNet_.
+- Add interface to the arXiv_ using http://arxiv.org/help/api 
+  or http://arxiv.org/help/oa.
+- Add flag to stop add list of fields that should not be changed
+- More intelligent searches using MathSciNet_
 - Add lookup using MRef and, when an entry is not found, allow additional
   searches
 - Add an rc file?
 - Fix the wrapping of bibtex fields.
-- Add interface to the arXiv_ using http://arxiv.org/help/api 
-  or http://arxiv.org/help/oa.
 
 Author
 ======
 
 `Andrew Mathas`_
 
-bibupdate_ Version 1.3dev. Copyright (C) 2012,14 
+bibupdate_ Version 1.3. Copyright (C) 2012,14 
 
 GNU General Public License, Version 3, 29 June 2007
 

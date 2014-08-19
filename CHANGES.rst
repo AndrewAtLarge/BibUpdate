@@ -1,5 +1,7 @@
 **v1.3** - 
 
+* Generate README files (rst, tex, pdf) from main program
+* Add support for uploading to ctan
 * Better names for some of the options
 
 **v1.2** July 2014
