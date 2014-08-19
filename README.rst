@@ -1,10 +1,11 @@
+
 =========
 bibupdate
 =========
 
 Automatically update the entries of a bibtex file
 
-usage: bibupdate [-h] [-a] [-c] [-f] [-i FIELDS] [-l LOG] [-m | -M] [-q] [-r]
+usage: bibupdate [-h|-H] [-a] [-c] [-f] [-i FIELDS] [-l LOG] [-m | -M] [-q] [-r]
                  [-w LEN] bibtexfile [outputfile]
 
 This is a command line tool for updating the entries in a BibTeX_ file using
@@ -15,9 +16,10 @@ disable future checking of an entry by giving it an empty ``mrnumber`` field).
 **Options**::
 
   -a, --all             update or validate ALL BibTeX entries
-  -c, --check_all       check all bibtex entries against a database
+  -c, --check_all       check/verify all bibtex entries against a database
   -k, --keep_fonts      do NOT replace fonts \Bbb, \germ and \scr in titles
   -h, --help            show this help message and exit
+  -H, --Help            print full program description
   -i FIELDS, --ignored-fields FIELDS
                         a string of bibtex fields to ignore
   -l LOG, --log LOG     log messages to specified file (defaults to stdout)

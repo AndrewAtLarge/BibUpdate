@@ -25,29 +25,44 @@ Andrew Mathas andrew.mathas@gmail.com
 Copyright (C) 2012, 2014 
 '''
 
+##########################################################
+# Define bibupdate's meta data. Used for global variables, to generate the
+# doc-string and README files and in setup.py
+class MetaData(dict):
+    r"""
+    A dummy class for hiding meta data and global variables.
+    """
+    def __init__(self, *args, **key_wd_args):
+        super(MetaData, self).__init__(self, *args, **key_wd_args)
+
 
 # The following meta data will be used to generate the __doc__ string below and
 # it is used in setup.py.
-meta_data= {
-    'author'       : 'Andrew Mathas',
-    'author_email' : 'andrew.mathas@gmail.com',
-    'description'  : 'Automatically update the entries of a bibtex file',
-    'keywords'     : 'bibtex, mrlookup, MathSciNet, latex',
-    'license'      : 'GNU General Public License, Version 3, 29 June 2007',
-    'name'         : 'bibupdate',
-    'url'          : 'https://bitbucket.org/AndrewsBucket/bibupdate',
-    'version'      : '1.3dev'
-}
+bibup=MetaData(
+    author       = 'Andrew Mathas',
+    author_email = 'andrew.mathas@gmail.com',
+    description  = 'Automatically update the entries of a bibtex file',
+    keywords     = 'bibtex, mrlookup, MathSciNet, latex',
+    license      = 'GNU General Public License, Version 3, 29 June 2007',
+    name         = 'bibupdate',
+    url          = 'https://bitbucket.org/AndrewsBucket/bibupdate',
+    version      = '1.3dev'
+)
 
 # version number of command line help message
-bibupdate_version='%(prog)s, version {version}: {description} {license}'.format(**meta_data)
+bibup.debugging=False # debugging off by default
+bibup.startup_warnings=[]
 
-######################################################
-import importlib, itertools, os, re, shutil, sys, textwrap, urllib, __builtin__
-
-
-# global options, used mainly for printing
-global options, verbose, warning, debugging, fix_fonts, wrapped
+##########################################################
+# now try and import the non-standard modules that we use
+import sys
+python_version=sys.version_info[:2]
+if python_version<(2,6):
+    print('bibupdate requires python 2.6 or later. Please upgrade python.')
+    sys.exit(1)
+elif python_version>=(3,0):
+    print('bibupdate does not yet run under python 3.0 or higher. Please use python 2.')
+    sys.exit(1)
 
 ##########################################################
 # We trap system errors so that we can exit cleanly when the program is
@@ -58,7 +73,7 @@ def CleanExceptHook(type, value, traceback):
     """
     if type == KeyboardInterrupt:
         bib_error('program killed. Exiting...')
-    elif (not options.debugging or hasattr(sys, 'ps1') or not sys.stdin.isatty()
+    elif (not bibup.debugging or hasattr(sys, 'ps1') or not sys.stdin.isatty()
             or not sys.stdout.isatty() or not sys.stderr.isatty() 
             or issubclass(type, bdb.BdbQuit) or issubclass(type, SyntaxError)):
         sys.__excepthook__(type, value, traceback)
@@ -66,24 +81,28 @@ def CleanExceptHook(type, value, traceback):
         import traceback, pdb
         # we are NOT in interactive mode, print the exception...
         traceback.print_exception(type, value, tb)
-        print
+        print()
         # ...then start the debugger in post-mortem mode.
         pdb.pm()
 
 # ...and a hook to grab the exception
 sys.excepthook = CleanExceptHook
 
-##########################################################
-## now try and import the non-standard modules that we use
-if sys.version_info[:2]<(2,6):
-    startup_warnings.append('bibupdate requires python 2.6 or later, so the program may fail')
+######################################################
+import itertools, os, re, shutil, textwrap, urllib
 
-# try and import argparse and quit if we fail
+# this will fail with older versions of python so we add our exception hook first
+bibup.bibupdate_version='%(prog)s, version {version}: {description}\n{license}'.format(**bibup)
+
+##########################################################
+# Try and import the (non-standard) modules that we use
+
+# import argparse if possible and quit if we fail
 try:
     import argparse
 except (ImportError):
     print('bibupdate needs to have the argparse module installed')
-    print('Upgrade python or (install pip and) type: pip install argparse')
+    print('Upgrade python or use easy_install or pip and to install argparse')
     sys.exit(1)
 
 # From python 2.7 onwards OrderedDict is in the standard collections library
@@ -95,10 +114,9 @@ except(ImportError):
         from  ordereddict import OrderedDict
     except(ImportError):
         # if we can't load Ordered revert to using dict
-        startup_warnings.append('bibupdate prefers to use the ordered ordered dictionaries')
-        startup_warnings.append('Upgrade python or (install pip and) type: pip install ordereddict')
+        print('bibupdate prefers to use the ordered ordered dictionaries')
+        print('Upgrade python or use easy_install or pip and to install ordereddict')
         OrderedDict=dict
-
 
 # finally, try to import and use fuzzywuzzy.fuzz
 try:
@@ -110,13 +128,11 @@ try:
         """
         return fuzz.ratio(one.lower(), two.lower())>90
 except(ImportError):
-    warning('bibupdate usually uses fuzzy matching to check the titles any matches.')
-    warning('Unfortunately, this required the fuzzywuzzy package which is not installed')
-    warning('(Install pip and) type: pip install fuzzywuzzy')
+    print('bibupdate usually uses fuzzy matching to check the titles any matches.')
+    print('Unfortunately, this requires the fuzzywuzzy package which is not installed')
+    print('For more accurate matching use easy_install or pip and to install fuzzywuzzy')
     def good_match(one,two):
         return True
-
-
 
 def bib_print(*args):
     r"""
@@ -179,7 +195,7 @@ def replace_fonts(string):
     return font_replacer.sub(lambda match : r'\%s{%s}' % (fonts_to_replace[match.group(1)],match.group(2) or match.group(3)), string)
 
 # overkill for "type checking" of the wrap length command line option
-class NonnegativeIntegers(__builtin__.list):
+class NonnegativeIntegers(list):
     r"""
     A class that gives an easy test for positive integers::
 
@@ -265,7 +281,7 @@ class Bibtex(OrderedDict):
                     val=' '.join(val.split()) # remove any internal space from val
                 lkey=key.lower()              # keys always in lower case
                 if lkey=='title':
-                    self[lkey]=fix_fonts(val) # only fix fonts in the title, others assumed OK
+                    self[lkey]=bibup.fix_fonts(val) # only fix fonts in the title, others assumed OK
                 else:
                     self[lkey]=val
 
@@ -279,7 +295,7 @@ class Bibtex(OrderedDict):
         """
         if hasattr(self,'pub_type'):
             return '@%s{%s,\n  %s\n}' % (self.pub_type.upper(), self.cite_key,
-                    ',\n  '.join('%s = {%s}'%(key,wrapped(self[key]))
+                    ',\n  '.join('%s = {%s}'%(key,bibup.wrapped(self[key]))
                      for key in self.keys() if key not in options.ignored_fields))
         else:
             return self.bib_string
@@ -325,21 +341,21 @@ class Bibtex(OrderedDict):
         bibup.debug('MR number of matches=%d'%len(matches))
         clean_ti=clean_title(self['title'])
         bibup.debug('MR ti=%s.%s' % (clean_ti, ''.join('\nMR -->%s.'%clean_title(mr['title']) for mr in matches)))
-        if clean_ti<>'':
+        if clean_ti!='':
             matches=[mr for mr in matches if good_match(clean_ti, clean_title(mr['title']))]
         bibup.debug('MR number of clean matches=%d'%len(matches))
 
         if len(matches)==1:
             match=matches[0]
-            differences=[key for key in match if key not in options.ignored_fields and self[key]<>match[key]]
+            differences=[key for key in match if key not in options.ignored_fields and self[key]!=match[key]]
             if differences!=[] and any(self[key]!='' for k in differences):
                 if options.check_all:
                     bib_print('%s\n%s=%s\n%s' % ('='*30, self.cite_key, self['title'][:50],
                                   '\n'.join(' %s: %s\n%s-> %s'%(key,self[key], ' '*len(key), match[key]) 
                                         for key in differences)))
                 else:
-                    warning('%s\n+ Updating %s=%s' % ('+'*30, self.cite_key, self['title'][:50]))
-                    verbose('\n'.join('+  %s: %s\n+%s->  %s'%(key,self[key], ' '*len(key),
+                    bibup.warning('%s\n+ Updating %s=%s' % ('+'*30, self.cite_key, self['title'][:50]))
+                    bibup.verbose('\n'.join('+  %s: %s\n+%s->  %s'%(key,self[key], ' '*len(key),
                                         match[key]) for key in differences))
                     for key in differences:
                         self[key]=match[key]
@@ -348,7 +364,7 @@ class Bibtex(OrderedDict):
 
         else:  # no good match, or more than one good match
             if not self.is_preprint:
-                verbose("%s\n%s Didn't find %s=%s"%('-'*30, 
+                bibup.verbose("%s\n%s Didn't find %s=%s"%('-'*30, 
                             '!' if self.is_preprint else '!', self.cite_key,
                             self['title'][:40] if self.has_key('title') else '???'))
 
@@ -416,7 +432,7 @@ def process_options():
     r"""
     Set up and then parse the options to bibupdate using argparse.
     """
-    global options, verbose, warning, debugging, fix_fonts, wrapped
+    global options, bibup
 
     parser = argparse.ArgumentParser(description='Update and validate BibTeX files',
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -452,7 +468,7 @@ def process_options():
                         metavar='LEN', help='wrap bibtex fields to specified width')
 
     # suppress printing of these two options
-    parser.add_argument('--version',action='version', version=bibupdate_version, help=argparse.SUPPRESS)
+    parser.add_argument('--version',action='version', version=bibup.bibupdate_version, help=argparse.SUPPRESS)
     parser.add_argument('-d','--debugging',action='count', default=0, help=argparse.SUPPRESS)
 
     # parse the options
@@ -476,25 +492,26 @@ def process_options():
 
     # define word wrapping when requested
     if options.wrap!=0:
-        wrapped=lambda field: '\n'.join(textwrap.wrap(field,options.wrap,subsequent_indent='\t'))
+        bibup.wrapped=lambda field: '\n'.join(textwrap.wrap(field,options.wrap,subsequent_indent='\t'))
     else:
-        wrapped=lambda field: field
+        bibup.wrapped=lambda field: field
 
     # define debugging, verbose and warning functions
     if options.debugging>0:
         options.quieter=2
-        debugging=bib_print
+        bibup.debugging=True
+        bibup.debug=bib_print
         if options.debugging==4:
             # start pudb
             import pudb
             pu.db
     else:
-        debugging=lambda *arg: None
-    verbose=bib_print if options.quieter==2 else lambda *arg: None
-    warning=bib_print if options.quieter>=1 else lambda *arg: None
+        bibup.debug=lambda *arg: None
+    bibup.verbose=bib_print if options.quieter==2 else lambda *arg: None
+    bibup.warning=bib_print if options.quieter>=1 else lambda *arg: None
 
     # a shorthand for fixed the fonts (to avoid an if-statement when calling it)
-    fix_fonts=replace_fonts if not options.keep_fonts else lambda title: title 
+    bibup.fix_fonts=replace_fonts if not options.keep_fonts else lambda title: title 
 
 def main():
     r"""
@@ -587,7 +604,7 @@ disable future checking of an entry by giving it an empty ``mrnumber`` field).
                         a string of bibtex fields to ignore
   -l LOG, --log LOG     log messages to specified file (defaults to stdout)
   -o  --overwrite       overwrite existing bibtex file
-  -q, --quietness       print fewer messages
+  -q, --quieter         print fewer messages
   -w LEN --wrap LEN     wrap bibtex fields to specified width
 
   -m, --mrlookup        use mrlookup to update bibtex entries (default)
@@ -714,7 +731,7 @@ Options and defaults
   the original BibTeX_ is made with a .bak extension. it is also possible to
   specify the output filename as the last argument to bibupdate.
 
--q, --quietness  Print fewer messages
+-q, --quieter    Print fewer messages
 
   There are three levels of verbosity in how bibupdate_ describes the changes that
   it is making. These are determined by the q-option as follows::
@@ -853,5 +870,5 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 .. _MathSciNet: http://www.ams.org/mathscinet/
 .. _mrlookup: http://www.ams.org/mrlookup
 .. _Python: https://www.python.org/
-'''.format(**meta_data)
+'''.format(**bibup)
 

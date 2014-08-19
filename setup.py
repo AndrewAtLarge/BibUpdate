@@ -3,10 +3,18 @@ from subprocess import call
 import bibupdate, datetime, sys
 
 install_requires = ['fuzzywuzzy >= 0.2']
+
 # need to do the following properly...there's no point checking the version
 # number on the system creating the distribution.
-if sys.version_info[:2] < (2, 7):
+python_version=sys.version_info[:2]
+if python_version < (2,6):
+    print('bibupdate requires python 2.6 or later. Please upgrade python.')
+    sys.exit(1)
+elif python_version==(2,6):
     install_requires += [ 'argparse','ordereddict>=1.1' ]
+elif python_version>=(3,0):
+    print('bibupdate does not yet run under python 3.0 or higher. Please use python 2.')
+    sys.exit(1)
 
 # for generating ctan release log
 ctan_specs=r'''# Generated: {today}
@@ -35,30 +43,30 @@ preamble=r'''\usepackage[a4paper,margin=15mm]{{geometry}}
 }}
 '''
 
-# generate the README file
+# generate the rst, tex and pdf version of the README file
 if 'readme' in sys.argv:
     with open('README.rst','w') as rst_readme:
       rst_readme.write(bibupdate.__doc__)
 
     # we set --no-doc-title to stop rst2latex from overwriting the document title above
-    preamble=' --no-doc-title --latex-preamble="{latex}"'.format(latex=preamble.format( **bibupdate.meta_data ))
+    preamble=' --no-doc-title --latex-preamble="{latex}"'.format(latex=preamble.format( **bibupdate.bibup ))
     call('rst2latex.py {opts} README.rst README.tex'.format(opts=preamble), shell=True)
     call('pdflatex README && pdflatex README', shell=True)
 
 elif 'ctan' in sys.argv:
-    bibupdate.meta_data['today']='{:%d, %b %Y}'.format(datetime.date.today())
+    bibupdate.bibup['today']='{:%d, %b %Y}'.format(datetime.date.today())
     with open('bibupdate.ctan','w') as ctan:
-        ctan.write( ctan_specs.format(**bibupdate.meta_data) )
+        ctan.write( ctan_specs.format(**bibupdate.bibup) )
     print('To upload to ctan run: ctanupload -F bibupdate.ctan')
 else:
-    setup(name=bibupdate.meta_data.name,
-          author=bibupdate.meta_data.author,
-          author_email=bibupdate.author_email,
-          description=bibupdate.meta_data.description,
-          keywords=bibupdate.meta_data.keywords,
-          license=bibupdate.meta_data.license,
-          url=bibupdate.meta_data.url,
-          version=bibupdate.meta_data.version,
+    setup(name=bibupdate.bibup['name'],
+          author=bibupdate.bibup['author'],
+          author_email=bibupdate.bibup['author_email'],
+          description=bibupdate.bibup['description'],
+          keywords=bibupdate.bibup['keywords'],
+          license=bibupdate.bibup['license'],
+          url=bibupdate.bibup['url'],
+          version=bibupdate.bibup['version'],
 
           long_description=bibupdate.__doc__,
 
