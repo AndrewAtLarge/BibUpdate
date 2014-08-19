@@ -1,4 +1,5 @@
 include *.py
 include *.rst
+include README.pdf
 include LICENSE.txt
 

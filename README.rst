@@ -24,7 +24,7 @@ disable future checking of an entry by giving it an empty ``mrnumber`` field).
                         a string of bibtex fields to ignore
   -l LOG, --log LOG     log messages to specified file (defaults to stdout)
   -o  --overwrite       overwrite existing bibtex file
-  -q, --quietness       print fewer messages
+  -q, --quieter         print fewer messages
   -w LEN --wrap LEN     wrap bibtex fields to specified width
 
   -m, --mrlookup        use mrlookup to update bibtex entries (default)
@@ -151,7 +151,7 @@ Options and defaults
   the original BibTeX_ is made with a .bak extension. it is also possible to
   specify the output filename as the last argument to bibupdate.
 
--q, --quietness  Print fewer messages
+-q, --quieter    Print fewer messages
 
   There are three levels of verbosity in how bibupdate_ describes the changes that
   it is making. These are determined by the q-option as follows::
@@ -253,13 +253,12 @@ To do
 =====
 
 - More intelligent searches using MathSciNet_.
-- Add lookups using MRef and, when an entry is not found, allow additional
+- Add lookup using MRef and, when an entry is not found, allow additional
   searches
 - Add an rc file?
 - Fix the wrapping of bibtex fields.
-- Interface to the arXiv_? In principle, this is easy to do although,
-  ultimately, it would probably not work because the arXiv_ blocks frequent
-  requests from the same IP address in order to discourage robots.
+- Add interface to the arXiv_ using http://arxiv.org/help/api 
+  or http://arxiv.org/help/oa.
 
 Author
 ======
