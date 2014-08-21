@@ -5,6 +5,7 @@
 * Added preserved bibtex fields (todo)
 * Added multiple look-up searches (todo)
 * Made compatible with ctan distribution (todo)
+* Now runs under python 3
 
 **v1.3** - August 2014
 

@@ -12,9 +12,6 @@ if python_version < (2,6):
     sys.exit(1)
 elif python_version==(2,6):
     install_requires += [ 'argparse','ordereddict>=1.1' ]
-elif python_version>=(3,0):
-    print('bibupdate does not yet run under python 3.0 or higher. Please use python 2.')
-    sys.exit(1)
 
 # for generating ctan release log
 ctan_specs=r'''# Generated: {today}
@@ -80,6 +77,7 @@ else:
               'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
               'Natural Language :: English',
               'Programming Language :: Python :: 2.7',
+              'Programming Language :: Python :: 3',
               'Topic :: Text Processing',
               'Topic :: Text Processing :: Markup :: LaTeX',
               'Topic :: Utilities'

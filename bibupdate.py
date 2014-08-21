@@ -35,7 +35,6 @@ class MetaData(dict):
     def __init__(self, *args, **key_wd_args):
         super(MetaData, self).__init__(self, *args, **key_wd_args)
 
-
 # The following meta data will be used to generate the __doc__ string below and
 # it is used in setup.py.
 bibup=MetaData(
@@ -59,9 +58,6 @@ import sys
 python_version=sys.version_info[:2]
 if python_version<(2,6):
     print('bibupdate requires python 2.6 or later. Please upgrade python.')
-    sys.exit(1)
-elif python_version>=(3,0):
-    print('bibupdate does not yet run under python 3.0 or higher. Please use python 2.')
     sys.exit(1)
 
 ##########################################################
@@ -88,34 +84,59 @@ def CleanExceptHook(type, value, traceback):
 # ...and a hook to grab the exception
 sys.excepthook = CleanExceptHook
 
-######################################################
-import itertools, os, re, shutil, textwrap, urllib
+##########################################################
+# Try and import the modules that we use - the tricky thing
+# is in keeping the different versions of python happy...
+
+import itertools, os, re, shutil, textwrap
+
+# The urllib modules have been reorganised in python 3 so we
+# need to proceed differently for python 2 and 3. We define
+# a version dependent handler function
+#     url_lookup(<url>,<search string>)
+# that opens the web pages and returns its' contents as a string.
+if python_version>=(3,0):
+    import urllib.request, urllib.parse, urllib.error
+    def url_lookup(url, search):
+        search_data=urllib.parse.urlencode(search).encode('utf-8')
+        lookup = urllib.request.urlopen(urllib.request.Request(url, search_data))
+        web_page=lookup.read().decode("utf-8")  # need to convert from byte object to string
+        lookup.close()
+        return web_page
+
+else:
+   import urllib
+   def url_lookup(url, search):
+       lookup = urllib.urlopen(url, urllib.urlencode(search))
+       web_page=lookup.read()
+       lookup.close()
+       return web_page
 
 # this will fail with older versions of python so we add our exception hook first
 bibup.bibupdate_version='%(prog)s, version {version}: {description}\n{license}'.format(**bibup)
 
-##########################################################
-# Try and import the (non-standard) modules that we use
-
 # import argparse if possible and quit if we fail
 try:
     import argparse
+
 except (ImportError):
-    print('bibupdate needs to have the argparse module installed')
-    print('Upgrade python or use easy_install or pip and to install argparse')
+    print('# bibupdate needs to have the argparse module installed')
+    print('# Upgrade python or use easy_install/pip to install argparse')
     sys.exit(1)
 
 # From python 2.7 onwards OrderedDict is in the standard collections library
 try:
     from collections import OrderedDict
+
 except(ImportError):
     try:
         # in python 2.6 OrderedDict is in ordereddict
         from  ordereddict import OrderedDict
+
     except(ImportError):
         # if we can't load Ordered revert to using dict
-        print('bibupdate prefers to use the ordered ordered dictionaries')
-        print('Upgrade python or use easy_install or pip and to install ordereddict')
+        print('# bibupdate works better with ordered ordered dictionaries')
+        print('# Upgrade python or use easy_install/pip to install ordereddict')
         OrderedDict=dict
 
 # finally, try to import and use fuzzywuzzy.fuzz
@@ -127,10 +148,11 @@ try:
         `one` and `two` are a good (fuzzy) match for each other.
         """
         return fuzz.ratio(one.lower(), two.lower())>90
+
 except(ImportError):
-    print('bibupdate usually uses fuzzy matching to check the titles any matches.')
-    print('Unfortunately, this requires the fuzzywuzzy package which is not installed')
-    print('For more accurate matching use easy_install or pip and to install fuzzywuzzy')
+    print('# bibupdate tries to use fuzzy matching to check the titles any matches.')
+    print('# Unfortunately, this requires the fuzzywuzzy package which is not installed')
+    print('# For more accurate matching use easy_install/pip to install fuzzywuzzy')
     def good_match(one,two):
         return True
 
@@ -235,20 +257,24 @@ class Bibtex(OrderedDict):
     # A regular expression to extract a bibtex entry from a string. We assume that
     # the pub_type is a word in [A-Za-z]* and allow the citation key and the
     # contents of the bibtex entry to be fairly arbitrary and of the form: {cite_key, *}.
-    parse_bibtex_entry=re.compile(r'@(?P<pub_type>[A-Za-z]*)\s*\{\s*(?P<cite_key>\S*)\s*,\s*?(?P<keys_and_vals>.*\})[,\s]*\}', re.MULTILINE|re.DOTALL)
+    parse_bibtex_entry=re.compile(r'@(?P<pub_type>[A-Za-z]*)\s*\{\s*(?P<cite_key>\S*)\s*,\s*?(?P<keys_and_vals>.*)[,\s]*\}', 
+                                  re.MULTILINE|re.DOTALL)
 
     # To extract the keys and values we need to remove all spaces around equals
     # signs because otherwise we are unable to cope with = inside a bibtex field.
     keys_and_vals=re.compile(r'\s*=\s*')
 
     # A regular expression to extract pairs of keys and values from a bibtex
-    # string. The syntax here is very lax: we assume that bibtex fields do not
-    # contain the string '={'.  From the AMS the format of a bibtex entry is
-    # much more rigid but we cannot assume that an arbitrary bibtex file will
+    # string. The syntax here is very generous: we assume that bibtex fields do not
+    # contain the string '={'. The format of a bibtex entry returned by the AMS
+    # is much more rigid but we cannot assume that an arbitrary bibtex file will
     # respect the AMS conventions.  There is a small complication in that we
     # allow the value of each field to either be enclosed in braces or to be a
-    # single word.
-    bibtex_keys=re.compile(r'([A-Za-z]+)=(?:\{((?:[^=]|=(?!\{))+)\}|(\w+)),?\s*$', re.MULTILINE|re.DOTALL)
+    # single word. For this reason matches to the follow regular expression
+    # return triples of the form (key, value, word) corresponding to
+    #                 key={value}    OR      key=word
+    # In particular, either value=='' or word=''.
+    bibtex_keys=re.compile(r'([A-Za-z]+)=(?:\{((?:[^=]|=(?!\{))+)\}|(\w+))', re.MULTILINE|re.DOTALL)
 
     # A regular expression for extracting page numbers: <first page>-*<last page>
     # or simply <page>.
@@ -257,13 +283,20 @@ class Bibtex(OrderedDict):
     # For authors we match either "First Last" or "Last, First" with the
     # existence of the comma being the crucial test because we want to allow
     # compound surnames like De Morgan.
-    author=re.compile(r'(?P<Au>[\w\s\\\-\'"{}]+),\s[A-Z]|[\w\s\\\-\'"{}]+\s(?P<au>[\w\s\\\-\'"{}]+)',re.DOTALL)
+    author=re.compile(r'\s+(?P<Au>[\w\s\\\-\'"{}]+),\s[A-Z]|[\w\s\\\-\'"{}]+\s(?P<au>[\w\s\\\-\'"{}]+)',re.DOTALL)
 
     def __init__(self, bib_string):
         """
         Given a string <bib_string> that contains a bibtex entry return the corresponding Bibtex class.
 
-        EXAMPLE:
+        EXAMPLES::
+
+        >>> Bibtex.parse_bibtex_entry.search('@article{fred, author={fred}, year={2014}}').groups()
+        ('article', 'fred', ' author={fred}, year={2014}')
+        >>> Bibtex.parse_bibtex_entry.search('@article{fred, author={fred}, year=2014}').groups()
+        ('article', 'fred', ' author={fred}, year=2014')
+        >>> Bibtex.bibtex_keys.findall(' author={fred}, year=2014')
+        [('author', 'fred', ''), ('year', '', '2014')]
         """
         super(Bibtex, self).__init__()   # initialise as an OrderedDict
         entry=self.parse_bibtex_entry.search(bib_string)
@@ -286,8 +319,8 @@ class Bibtex(OrderedDict):
                     self[lkey]=val
 
             # guess whether this entry corresponds to a preprint
-            self.is_preprint=( (self.has_key('pages') and self['pages'].lower() in ['preprint', 'to appear', 'in preparation'])
-                      or not (self.has_key('pages') and self.has_key('journal')) )
+            self.is_preprint=( ('pages' in self and self['pages'].lower() in ['preprint', 'to appear', 'in preparation'])
+                      or not ('pages' in self and 'jounral' in self) )
 
     def __str__(self):
         r"""
@@ -326,17 +359,15 @@ class Bibtex(OrderedDict):
 
         The url can (currently) point to mrlookup or to mathscinet.
         """
-        # query url with the search string
+        # Query the url with the search string - the python 2/3 version dependency
+        # is hidden in the function url_lookup()
         try:
-            bibup.debug('S %s\n%s' % (url, '\n'.join('S %s=%s'%(s[0],s[1]) for s in search.items())))
-            lookup = urllib.urlopen(url, urllib.urlencode(search))
-            page=lookup.read()
-            lookup.close()   # close the url feed
+            web_page=url_lookup(url, search)
         except IOError:
             bib_error('unable to connect to %s' % url)
 
         # attempt to match self with the bibtex entries returned by mrlookup
-        matches=[Bibtex(mr.groups(0)[0]) for mr in bibtex_entry.finditer(page)]
+        matches=[Bibtex(mr.groups(0)[0]) for mr in bibtex_entry.finditer(web_page)]
         matches=[mr for mr in matches if mr is not None and mr.has_valid_pub_type()]
         bibup.debug('MR number of matches=%d'%len(matches))
         clean_ti=clean_title(self['title'])
@@ -348,7 +379,7 @@ class Bibtex(OrderedDict):
         if len(matches)==1:
             match=matches[0]
             differences=[key for key in match if key not in options.ignored_fields and self[key]!=match[key]]
-            if differences!=[] and any(self[key]!='' for k in differences):
+            if differences!=[] and any(self[key]!='' for key in differences):
                 if options.check:
                     bib_print('%s\n%s=%s\n%s' % ('='*30, self.cite_key, self['title'][:50],
                                   '\n'.join(' %s: %s\n%s-> %s'%(key,self[key], ' '*len(key), match[key]) 
@@ -366,7 +397,7 @@ class Bibtex(OrderedDict):
             if not self.is_preprint:
                 bibup.verbose("%s\n%s Didn't find %s=%s"%('-'*30, 
                             '!' if self.is_preprint else '!', self.cite_key,
-                            self['title'][:40] if self.has_key('title') else '???'))
+                            self['title'][:40] if 'title' in self else '???'))
 
     def mrlookup(self):
         """
@@ -376,14 +407,14 @@ class Bibtex(OrderedDict):
         finding the correct search parameters.
         """
         # only check mrlookup for books or articles for which we don't already have an mrnumber field
-        if not options.all and (self.has_key('mrnumber')
+        if not options.all and ('mrnumber' in self
            or self.pub_type not in ['book','article','inproceedings','incollection']):
             return
 
         bibup.debug('='*30)
         search={'bibtex':'checked'}   # a dictionary that will contain the parameters for the mrlookup search
 
-        if self.has_key('pages') and not self.is_preprint:
+        if 'pages' in self and not self.is_preprint:
             pages=self.page_nums.search(self['pages'])
             if not pages is None:
                 search['ipage']=pages.group('apage')  # first page
@@ -393,11 +424,11 @@ class Bibtex(OrderedDict):
                 #search['fpage']=self['pages']  # last page
 
         # the year is reliable only if we also have page numbers
-        if self.has_key('year') and (self.pub_type=='book' or search.has_key('ipage')):
+        if 'year' in self and (self.pub_type=='book' or 'ipage' in search):
             search['year']=self['year']
 
         # mrlookup requires either an author or a title
-        if self.has_key('author'):
+        if 'author' in self:
             # mrlookup is latex aware and it does a far better job of parsing
             # authors than we ever will, however, it only recognises authors in
             # the form "Last Name" -- and sometimes with a first initial as
@@ -415,7 +446,7 @@ class Bibtex(OrderedDict):
             if len(authors)>5:
                 search['au']=authors[5:]
 
-        if self.has_key('title') and len(self['title'])>0 and (not search.has_key('ipage') or self.is_preprint):
+        if 'title' in self and len(self['title'])>0 and (not 'ipage' in search or self.is_preprint):
             search['ti']=clean_title(self['title'])
 
         self.update_entry('http://www.ams.org/mrlookup', search)
@@ -424,7 +455,7 @@ class Bibtex(OrderedDict):
         """
         Use MathSciNet to check/update the entry using the mrnumber field, if it exists.
         """
-        if options.all or self.has_key('mrnumber'):
+        if options.all or 'mrnumber' in self:
             search={'fmt': 'bibtex', 'pg1': 'MR', 's1': self['mrnumber'].split()[0]}
             self.update_entry('http://www.ams.org/mathscinet/search/publications.html', search, False)
 
