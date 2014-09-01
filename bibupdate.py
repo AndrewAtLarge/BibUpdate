@@ -60,6 +60,12 @@ if python_version<(2,6):
     print('bibupdate requires python 2.6 or later. Please upgrade python.')
     sys.exit(1)
 
+# all printing is done via options.log, this hack is necessary in 
+# case here is an error before this is set up properly.
+options=MetaData()
+options.log=sys.stdout
+options.prog='bibupdate'
+
 ##########################################################
 # We trap system errors so that we can exit cleanly when the program is
 # killed and so that we can automatically tap into a debugger when debugging.
@@ -97,17 +103,18 @@ import itertools, os, re, shutil, textwrap
 # that opens the web pages and returns its' contents as a string.
 if python_version>=(3,0):
     import urllib.request, urllib.parse, urllib.error
-    def url_lookup(url, search):
-        search_data=urllib.parse.urlencode(search).encode('utf-8')
-        lookup = urllib.request.urlopen(urllib.request.Request(url, search_data))
+    urlencode=lambda search: urllib.parse.urlencode(search)
+    def url_lookup(url, search=''):
+        lookup = urllib.request.urlopen(urllib.request.Request(url, search.encode('utf-8')))
         web_page=lookup.read().decode("utf-8")  # need to convert from byte object to string
         lookup.close()
         return web_page
 
 else:
    import urllib
-   def url_lookup(url, search):
-       lookup = urllib.urlopen(url, urllib.urlencode(search))
+   url_encode=lambda search: urllib.urlencode(search)
+   def url_lookup(url, search=''):
+       lookup = urllib.urlopen(url, search)
        web_page=lookup.read()
        lookup.close()
        return web_page
@@ -262,7 +269,7 @@ class Bibtex(OrderedDict):
 
     # To extract the keys and values we need to remove all spaces around equals
     # signs because otherwise we are unable to cope with = inside a bibtex field.
-    keys_and_vals=re.compile(r'\s*=\s*')
+    despace_equals=re.compile(r'\s*=\s*')
 
     # A regular expression to extract pairs of keys and values from a bibtex
     # string. The syntax here is very generous: we assume that bibtex fields do not
@@ -274,7 +281,7 @@ class Bibtex(OrderedDict):
     # return triples of the form (key, value, word) corresponding to
     #                 key={value}    OR      key=word
     # In particular, either value=='' or word=''.
-    bibtex_keys=re.compile(r'([A-Za-z]+)=(?:\{((?:[^=]|=(?!\{))+)\}|(\w+))', re.MULTILINE|re.DOTALL)
+    keys_and_vals=re.compile(r'([A-Za-z]+)=(?:\{((?:[^=]|=(?!\{))+)\}|(\w+))', re.MULTILINE|re.DOTALL)
 
     # A regular expression for extracting page numbers: <first page>-*<last page>
     # or simply <page>.
@@ -306,8 +313,8 @@ class Bibtex(OrderedDict):
         else:
             self.pub_type=entry.group('pub_type').strip().lower()
             self.cite_key=entry.group('cite_key').strip()
-            keys_and_vals=self.keys_and_vals.sub('=',entry.group('keys_and_vals'))   # remove spaces around = 
-            for (key,val,word) in self.bibtex_keys.findall(keys_and_vals):
+            keys_and_vals=self.despace_equals.sub('=',entry.group('keys_and_vals'))   # remove spaces around = 
+            for (key,val,word) in self.keys_and_vals.findall(keys_and_vals):
                 if val=='': 
                     val=word                  # val matches {value} whereas word matches word
                 else:
@@ -318,9 +325,8 @@ class Bibtex(OrderedDict):
                 else:
                     self[lkey]=val
 
-            # guess whether this entry corresponds to a preprint
-            self.is_preprint=( ('pages' in self and self['pages'].lower() in ['preprint', 'to appear', 'in preparation'])
-                      or not ('pages' in self and 'jounral' in self) )
+            # define the dictionary used for external database lookups
+            self.define_search_dictionary()
 
     def __str__(self):
         r"""
@@ -329,7 +335,7 @@ class Bibtex(OrderedDict):
         if hasattr(self,'pub_type'):
             return '@%s{%s,\n  %s\n}' % (self.pub_type.upper(), self.cite_key,
                     ',\n  '.join('%s = {%s}'%(key,bibup.wrapped(self[key]))
-                     for key in self.keys() if key not in options.ignored_fields))
+                     for key in self.keys() if key not in options.remove_fields))
         else:
             return self.bib_string
 
@@ -350,82 +356,27 @@ class Bibtex(OrderedDict):
         """
         return hasattr(self, 'pub_type') and (self.pub_type in bibtex_pub_types)
 
-    def update_entry(self, url, search):
+    def define_search_dictionary(self):
+        r"""
+        Define a dictionary for the terms to be used in database lookups.
+        This function also sets the preprint flag `self.is_preprint`.
         """
-        Call `url` to search for the bibtex entry as specified by the dictionary
-        `search` and then update `self` if there is a unique good match. If
-        there is a good match then we update ourself and overwrite all fields
-        with those from mrlookup (and keep any other fields).
+        # guess whether this entry corresponds to a preprint
+        self.is_preprint=( ('pages' in self and self['pages'].lower() in ['preprint', 'to appear', 'in preparation'])
+                  or not ('pages' in self and 'jounral' in self) )
 
-        The url can (currently) point to mrlookup or to mathscinet.
-        """
-        # Query the url with the search string - the python 2/3 version dependency
-        # is hidden in the function url_lookup()
-        try:
-            web_page=url_lookup(url, search)
-        except IOError:
-            bib_error('unable to connect to %s' % url)
-
-        # attempt to match self with the bibtex entries returned by mrlookup
-        matches=[Bibtex(mr.groups(0)[0]) for mr in bibtex_entry.finditer(web_page)]
-        matches=[mr for mr in matches if mr is not None and mr.has_valid_pub_type()]
-        bibup.debug('MR number of matches=%d'%len(matches))
-        clean_ti=clean_title(self['title'])
-        bibup.debug('MR ti=%s.%s' % (clean_ti, ''.join('\nMR -->%s.'%clean_title(mr['title']) for mr in matches)))
-        if clean_ti!='':
-            matches=[mr for mr in matches if good_match(clean_ti, clean_title(mr['title']))]
-        bibup.debug('MR number of clean matches=%d'%len(matches))
-
-        if len(matches)==1:
-            match=matches[0]
-            differences=[key for key in match if key not in options.ignored_fields and self[key]!=match[key]]
-            if differences!=[] and any(self[key]!='' for key in differences):
-                if options.check:
-                    bib_print('%s\n%s=%s\n%s' % ('='*30, self.cite_key, self['title'][:50],
-                                  '\n'.join(' %s: %s\n%s-> %s'%(key,self[key], ' '*len(key), match[key]) 
-                                        for key in differences)))
-                else:
-                    bibup.warning('%s\n+ Updating %s=%s' % ('+'*30, self.cite_key, self['title'][:50]))
-                    bibup.verbose('\n'.join('+  %s: %s\n+%s->  %s'%(key,self[key], ' '*len(key),
-                                        match[key]) for key in differences))
-                    for key in differences:
-                        self[key]=match[key]
-            else:
-                bibup.debug('No change')
-
-        else:  # no good match, or more than one good match
-            if not self.is_preprint:
-                bibup.verbose("%s\n%s Didn't find %s=%s"%('-'*30, 
-                            '!' if self.is_preprint else '!', self.cite_key,
-                            self['title'][:40] if 'title' in self else '???'))
-
-    def mrlookup(self):
-        """
-        Use mrlookup to search for a more up-to-date version of this entry. To
-        search with mrlookup we look for papers published by the first author in
-        the given year with the right page numbers. Most of the work here is in
-        finding the correct search parameters.
-        """
-        # only check mrlookup for books or articles for which we don't already have an mrnumber field
-        if not options.all and ('mrnumber' in self
-           or self.pub_type not in ['book','article','inproceedings','incollection']):
-            return
-
-        bibup.debug('='*30)
-        search={'bibtex':'checked'}   # a dictionary that will contain the parameters for the mrlookup search
-
+        self.search={}
         if 'pages' in self and not self.is_preprint:
             pages=self.page_nums.search(self['pages'])
             if not pages is None:
-                search['ipage']=pages.group('apage')  # first page
-                search['fpage']=pages.group('zpage')  # last page
+                self.search['ipage']=pages.group('apage')  # first page
+                self.search['fpage']=pages.group('zpage')  # last page
             elif self['pages'].isdigit():
-                search['ipage']=self['pages']  # first page
-                #search['fpage']=self['pages']  # last page
+                self.search['ipage']=self['pages']  # first page
 
         # the year is reliable only if we also have page numbers
-        if 'year' in self and (self.pub_type=='book' or 'ipage' in search):
-            search['year']=self['year']
+        if 'year' in self and (self.pub_type=='book' or 'ipage' in self.search):
+            self.search['year']=self['year']
 
         # mrlookup requires either an author or a title
         if 'author' in self:
@@ -444,60 +395,263 @@ class Bibtex(OrderedDict):
                     else:
                         authors+=' and '+a.group('Au')    # LAST, First
             if len(authors)>5:
-                search['au']=authors[5:]
+                self.search['au']=authors[5:]
 
-        if 'title' in self and len(self['title'])>0 and (not 'ipage' in search or self.is_preprint):
-            search['ti']=clean_title(self['title'])
+        if 'title' in self and len(self['title'])>0 and (not 'ipage' in self.search or self.is_preprint):
+            self.search['ti']=clean_title(self['title'])
 
-        self.update_entry('http://www.ams.org/mrlookup', search)
+        # finally, set the needs_ams flag to True if this is a book or article for which we don't already have an mrnumber field
+        if options.all or ('mrnumber' not in self
+          and self.pub_type in ['book','article','inproceedings','incollection']):
+            self.needs_ams=True
+        else:
+            self.needs_ams=False
 
-    def mathscinet(self):
+
+    def update_entry(self, url, search):
+        """
+        Call `url` to search for the bibtex entry as specified by the dictionary
+        `search` and then update `self` if there is a unique good match. If
+        there is a good match then we update ourself and overwrite all fields
+        with those from mrlookup (and keep any other fields).
+
+        The url can (currently) point to mrlookup or to mathscinet.
+        """
+        # Query the url with the search string - the python 2/3 version dependency
+        # is hidden in the function url_lookup()
+        try:
+            web_page=url_lookup(url, url_encode(search))
+        except IOError:
+            bib_error('unable to connect to %s' % url)
+
+        # attempt to match self with the bibtex entries returned by mrlookup
+        matches=[Bibtex(mr.groups(0)[0]) for mr in bibtex_entry.finditer(web_page)]
+        matches=[mr for mr in matches if mr is not None and mr.has_valid_pub_type()]
+        bibup.debug('MR number of matches=%d'%len(matches))
+        bibup.debug('MR ti=%s.%s' % (self['title'], ''.join('\nMR -->%s.'%mr['title'] for mr in matches)))
+        if 'ti' in self.search:
+            matches=[mr for mr in matches if good_match(self.search['ti'], clean_title(mr['title']))]
+        bibup.debug('MR number of clean matches=%d'%len(matches))
+
+        if len(matches)==1:
+            match=matches[0]
+            differences=[key for key in match if key not in options.preserve_fields and self[key]!=match[key]]
+            if differences!=[] and any(self[key]!='' for key in differences):
+                if options.check:
+                    bib_print('%s\n%s=%s\n%s' % ('='*30, self.cite_key, self['title'][:50],
+                                  '\n'.join(' %s: %s\n%s-> %s'%(key,self[key], ' '*len(key), match[key]) 
+                                        for key in differences)))
+                else:
+                    bibup.warning('%s\n+ Updating %s=%s' % ('+'*30, self.cite_key, self['title'][:50]))
+                    bibup.verbose('\n'.join('+  %s: %s\n+%s->  %s'%(key,self[key], ' '*len(key),
+                                        match[key]) for key in differences))
+                    for key in differences:
+                        self[key]=match[key]
+            else:
+                bibup.debug('No change')
+
+            return True # found a match
+
+        else:  # no good match, or more than one good match
+            if not self.is_preprint:
+                bibup.verbose("%s\n%s Didn't find %s=%s"%('-'*30, 
+                            '!' if self.is_preprint else '!', self.cite_key,
+                            self['title'][:40] if 'title' in self else '???'))
+            return False # didn't find a match
+
+    def update_mrlookup(self):
+        """
+        Use mrlookup to search for a more up-to-date version of this entry. To
+        search with mrlookup we look for papers published by the first author in
+        the given year with the right page numbers. Most of the work here is in
+        finding the correct search parameters.
+        """
+        bibup.debug('='*30)
+        search={'bibtex':'checked'}   # a dictionary that will contain the parameters for the mrlookup search
+
+        return self.update_entry('http://www.ams.org/mrlookup', self.search)
+
+
+    def update_mrref(self):
+        r"""
+        TODO!!!
+        """
+        return self.needs_ams
+
+    def update_mathscinet(self):
         """
         Use MathSciNet to check/update the entry using the mrnumber field, if it exists.
         """
-        if options.all or 'mrnumber' in self:
+        if options.all or not 'mrnumber' in self:
             search={'fmt': 'bibtex', 'pg1': 'MR', 's1': self['mrnumber'].split()[0]}
-            self.update_entry('http://www.ams.org/mathscinet/search/publications.html', search, False)
+            return self.update_entry('http://www.ams.org/mathscinet/search/publications.html', search)
+        else:
+            return True
 
-def process_options():
+    # extract all entries between <entry>...</entry>
+    arxiv=re.compile(r'\<entry>(.*)?\<\/entry>', re.MULTILINE|re.DOTALL)
+
+    # extract all pairs of the form: <key>value</key>
+    arxiv_keys_and_vals=re.compile(r'\<(?P<key>[A-Za-z]+)>(?P<val>.*)\<\/(?P=key)>', re.MULTILINE|re.DOTALL)
+
+    def update_arxiv(self):
+        """
+        Use the arXiv's API to find link to arxiv
+
+
+        EXAMPLES::
+
+        >>> entry=r'''  <entry>
+        <id>http://arxiv.org/abs/math/0309426v2</id>
+        <updated>2004-07-01T14:37:17Z</updated>
+        <published>2003-09-26T16:40:30Z</published>
+        <title>Elementary divisors of Specht modules</title>
+        </entry>'''
+        >>> arxiv.findall(entry)[0]
+        '\n        <id>http://arxiv.org/abs/math/0309426v2</id>\n        <updated>2004-07-01T14:37:17Z</updated>\n        <published>2003-09-26T16:40:30Z</published>\n        <title>Elementary divisors of Specht modules</title>\n
+        >>> arxiv_keys_and_vals.findall(_)[0]
+        ('id', 'http://arxiv.org/abs/math/0309426v2'), ('updated', '2004-07-01T14:37:17Z'), 
+        ('published', '2003-09-26T16:40:30Z'), ('title', 'Elementary divisors of Specht modules')
+        """
+        search={}
+        if 'author' in self.search:
+            search['au'] =self.search['author']
+        if 'ti' in self.search:
+            search['ti']=self.search['ti']
+        try:
+            web_page=url_lookup('http://export.arxiv.org/api/query?search_query='+url_encode(search).replace('=',':').replace('&','+AND+'))
+        except IOError:
+            bib_error('unable to connect to %s' % url)
+
+        print web_page
+
+        matches=[]
+        for match in self.arxiv.findall(web_page):
+            m={}
+            for (key,val) in arxiv_keys_and_vals.findall(match):
+                m[key]=val
+            if good_match(self,self.search['title'],m['title']):
+                matches.append(m)
+
+        if len(matches)==1:
+            arxiv=matches[0]
+            bibup.verbose('+ arxiv link for {title}'.format(title=self['title']))
+            self['Archiveprefix'] = 'arXiv'
+            self['eprint']=arxiv['id'].split('/')[-1]     # http://arxiv.org/abs/math/0309426v2 --> 0309426v2
+            if 'abstract' in arxiv and not 'abstract' in self:
+                self['abstract']=arxiv['abstact']
+        else:
+            bibup.verbose('X {links} arxiv links for {title}'.format(links=len(matches),title=self['title']))
+
+    def update_ams(self):
+        r"""
+        Loop through the list of ams databases until we either exhaust the list
+        or find a match.
+        """
+        db=0
+        while self.needs_ams and db<len(options.ams_databases):
+            self.needs_ams=getattr(self, 'update_'+options.ams_databases[db])()  # call next ams database in list
+            db+=1
+
+    def update_all(self):
+        r"""
+        Update both arXiv and mathscinet entries for the publication. The method
+        first calls update_arxiv() to update the arxiv entry and then
+        calls he sequence of methods
+           update_mrlookup, update_mrref and mupdate_mathscinet
+        until one of them finds a match.
+        """
+        bibup.debug('Updating all with needs+ams=%s'%self.needs_ams)
+        self.update_arxiv()
+        self.update_ams()
+
+def set_user_options():
     r"""
     Set up and then parse the options to bibupdate using argparse.
     """
     global options, bibup
 
-    parser = argparse.ArgumentParser(description='Update and validate BibTeX files',
+    # bibupdate defaults - can be overridden from rc file or command line
+    defaults={'all': False,
+              'ams-databases': ['mrlookup', 'mrref', 'mathscinet'],
+              'check': False,
+              'keep-fonts': False,
+              'log': sys.stdout,
+              'overwrite': False,
+              'preserve-fields': [],
+              'quieter': 2,
+              'remove-fields': [],
+              'wrap':0,
+              'update':'all'
+    }
+    # check for a bibupdaterc file and read if it exists
+    if os.path.isfile(os.environ['HOME']+'/.bibupdaterc'):
+        try:
+            line_num=0 # track line numbers in case of an error
+            with open(os.environ['HOME']+'/.bibupdaterc','r') as bibrc:
+                for line in bibrc:
+                    line_num+=1
+                    line=line.split('#')[0]    # anything after "#" is a comment
+                    option,value=line.strip().split('=')
+                    option=option.strip().lower().replace('_','-')
+                    value=value.strip().lower()
+                    if not option in defaults:
+                        bib_error('illegal option "{option}" on line {line} of .bibupdaterc file'.format(
+                                      option=option, line=line_num))
+                    elif option in ['ams-databases','preserve-fields','remove-fields']:
+                        # these options set a list
+                        defaults[option]=[f.strip() for f in value.split(',')]
+                    elif option in ['all', 'check', 'keep-fonts','overwrite']:
+                        # these options are true or false
+                        defaults[option]=False if value=='false' else True
+                    elif option in ['quieter','wrap']:
+                        # options with integer values
+                        defaults['option']=int(value)
+                    elif option=='log':
+                        # the log must be a writable file
+                        defaults[value]=open(value,'w')
+                    elif option=='update':
+                        if value in ['all','arxiv','mrlookup','mref','mathscinet']:
+                            defaults[option]=value
+                        else:
+                            bib_error('illegal update value "{value}" on line {line} of .bibupdaterc file'.format(
+                                      line=line_num, value=value))
+                    elif option!='':
+                        defaults[option]=value
+
+        except Exception as err:
+            bib_error('error on line {line} of .bibupdaterc file'.format(line=line_num))
+
+    # now parse the command line arguments using argparse to define the parser
+    parser = argparse.ArgumentParser(description=bibup['description'],
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('bibtexfile',nargs='?',type=argparse.FileType('r'),default=None,help='bibtex file to update')
-    parser.add_argument('outputfile',nargs='?',type=str,default=None,
-                        help='output file')
+    parser.add_argument('bibtexfile',nargs='?',type=argparse.FileType('r'),help='bibtex file to update')
+    parser.add_argument('outputfile',nargs='?',type=str,default=None, help='output file (optional)')
 
+    parser.add_argument('-u','--update',type=str, choices=('all','arxiv','ams', 'mrlookup','mref','mathscinet'),
+                        default=defaults['update'], help='update mechanism (default: all)')
+    parser.add_argument('-a','--all',action='store_true',default=defaults['all'],
+                        help='update or check ALL BibTeX entries')
+    parser.add_argument('-c','--check',action='store_true', default=defaults['check'],
+                        help='check, but do not update, bibtex entries against databases')
+    parser.add_argument('-k','--keep-fonts',action='store_true', default=defaults['keep-fonts'],
+                        help='do NOT replace fonts \Bbb, \germ and \scr in titles')
+    parser.add_argument('-l','--log', default=defaults['log'], type=argparse.FileType('w'),
+                        help='log messages to specified file (defaults to stdout)')
+    parser.add_argument('-o','--overwrite',action='store_true', default=defaults['overwrite'],
+                        help='overwrite existing bibtex file (use carefully!)')
+    parser.add_argument('-p','--preserve-fields',type=str,default=defaults['preserve-fields'],
+                        metavar='FIELDS', action='append',help='do not change the values of these bibtex fields')
+    parser.add_argument('-r','--remove-fields',type=str,default=defaults['remove-fields'],
+                        metavar='FIELDS', action='append',help='delete these bibtex fields')
+    parser.add_argument('-q','--quieter',action='count', default=defaults['quieter'],
+                        help='printer fewer messages')
+    parser.add_argument('-w','--wrap',type=int, default=defaults['wrap'], action='store', 
+                        choices=NonnegativeIntegers(), metavar='LEN', 
+                        help='wrap bibtex fields to specified width')
     parser.add_argument('-H','--Help',action='store_true', default=False,
                         help='print full program description')
-    parser.add_argument('-a','--all',action='store_true',default=False,
-                        help='update or validate ALL BibTeX entries')
-    parser.add_argument('-c','--check',action='store_true', default=False,
-                        help='check/verify all bibtex entries against database')
-    parser.add_argument('-k','--keep_fonts',action='store_true', default=False,
-                        help='do NOT replace fonts \Bbb, \germ and \scr in titles')
-    parser.add_argument('-i','--ignored-fields',type=str,default=['coden','mrreviewer','fjournal','issn'],
-                        metavar='FIELDS', action='append',help='a string of bibtex fields to ignore')
-    parser.add_argument('-l','--log', default=sys.stdout, type=argparse.FileType('w'),
-                        help='log messages to specified file (defaults to stdout)')
-
-    # add a mutually exclusive switch for choosing between mrlookup and mathscinet
-    lookup=parser.add_mutually_exclusive_group()
-    lookup.add_argument('-m','--mrlookup',action='store_const',const='mrlookup',dest='lookup',
-                        default='mrlookup',help='use mrlookup to update bibtex entries (default)')
-    lookup.add_argument('-M','--mathscinet',action='store_const',const='mathscinet',dest='lookup',
-                        help='use mathscinet to update bibtex entries (less flexible)')
-
-    parser.add_argument('-o','--overwrite',action='store_true', default=False,
-                        help='overwrite existing bibtex file')
-    parser.add_argument('-q','--quieter',action='count', default=2,
-                        help='printer fewer messages')
-    parser.add_argument('-w','--wrap',type=int, default=0, action='store', choices=NonnegativeIntegers(),
-                        metavar='LEN', help='wrap bibtex fields to specified width')
 
     # suppress printing of these two options
     parser.add_argument('--version',action='version', version=bibup.bibupdate_version, help=argparse.SUPPRESS)
@@ -512,11 +666,24 @@ def process_options():
         bib_print(__doc__)
         sys.exit()
     elif options.bibtexfile==None:
-        biberror('no bibtex file specified')
+        bib_error('no bibtex file specified')
 
-    if len(options.ignored_fields)>4:
+    if len(options.preserve_fields)>len(defaults['preserve-fields']):
+        pres=len(defaults['preserve_fields'])
         # if any fields were added then don't ignore the first 4 fields.
-        options.ignored_fields=list(chain.from_iterable([i.lower().split() for i in options.ignored_fields[4:]]))
+        options.preserve_fields=list(chain.from_iterable([i.lower().split() for i in options.preserve_fields[pres:]]))
+
+    if len(options.remove_fields)>len(defaults['remove-fields']):
+        rem=len(defaults['remove_fields'])
+        # if any fields were added then don't ignore the first 4 fields.
+        options.remove_fields=list(chain.from_iterable([i.lower().split() for i in options.remove_fields[rem:]]))
+
+    options.ams_databases=defaults['ams-databases'] # can only be changed in .bibupdaterc
+    if options.update not in ['all','arxiv']:
+        # loop through all databases in options.ams_databases, so overwrite
+        # this if user wants to check a single AMS database
+        if options.update!='ams':
+            options.ams_databases=[options.update]
 
     # if check==True then we want to check everything
     if options.check:
@@ -549,11 +716,11 @@ def main():
     r"""
     Open the files and the delegate all of the hard work to the BibTeX class.
     """
-    process_options()
+    set_user_options()
 
     # now we are ready to read the BibTeX file and start working
     try:
-        papers=options.bibtexfile.read()  # file opened by argparse
+        papers=options.bibtexfile.read()  # file already opened by argparse
         options.bibtexfile.close()
         asterisk=papers.index('@')
     except IOError:
@@ -592,7 +759,7 @@ def main():
             bt=Bibtex(bibentry.group())
             # other pub_types are possible such as @comment{} we first check
             if bt.has_valid_pub_type():
-                getattr(bt, options.lookup)()  # call lookup program
+                getattr(bt, 'update_'+options.update)()  # call relevant update program
 
         # now write the new (and hopefully) improved entry
         if not options.check:
@@ -605,7 +772,6 @@ def main():
 if __name__ == '__main__':
   main()
 
-
 # The following __doc__ string is used both to print the documentation and by
 # setup.py to automatically generate the README file.
 __doc__=r'''
@@ -615,38 +781,47 @@ bibupdate
 
 {description}
 
-usage: bibupdate [-h|-H] [-a] [-c] [-f] [-i FIELDS] [-l LOG] [-m | -M] [-q] [-r] [-w LEN] bibtexfile [outputfile]
+usage: bibupdate [-h] [-H] [-a] [-c] [-k] [-l LOG] [-o] [-p FIELDS] [-r FIELDS] [-q]
+                 [-w LEN] [-u {{all,arxiv,mrlookup,mref,mathscinet}}]
+                 bibtexfile [outputfile]
 
 This is a command line tool for updating the entries in a BibTeX_ file using
 mrlookup_. By default bibupdate_ tries to update the entry for each paper
 in the BibTeX_ file unless the entry already has an ``mrnumber`` field (you can
 disable future checking of an entry by giving it an empty ``mrnumber`` field).
 
-**Options**::
+**Options**:
 
+  bibtexfile            bibtex file to update (required)
+
+  outputfile            output file (optional)
+
+optional arguments::
+
+  -u --update {{all,arxiv,mrlookup,mref,mathscinet}} update mechanism (default: all)
   -a, --all             update or validate ALL BibTeX entries
-  -c, --check           check/verify all bibtex entries against a database
+  -c, --check           check, but do not update, bibtex entries against databases
   -k, --keep_fonts      do NOT replace fonts \Bbb, \germ and \scr in titles
+  -l LOG, --log LOG     log messages to specified file (defaults to stdout)
+  -o, --overwrite       overwrite existing bibtex file (use carefully!)
+  -p FIELDS, --preserve-fields FIELDS
+                        do not change the values of these bibtex fields
+  -r FIELDS, --remove-fields FIELDS
+                        delete these bibtex fields
+  -q, --quieter         printer fewer messages
+  -w LEN, --wrap LEN    wrap bibtex fields to specified width
+
   -h, --help            show this help message and exit
   -H, --Help            print full program description
-  -i FIELDS, --ignored-fields FIELDS
-                        a string of bibtex fields to ignore
-  -l LOG, --log LOG     log messages to specified file (defaults to stdout)
-  -o  --overwrite       overwrite existing bibtex file
-  -q, --quieter         print fewer messages
-  -w LEN --wrap LEN     wrap bibtex fields to specified width
-
-  -m, --mrlookup        use mrlookup to update bibtex entries (default)
-  -M, --mathscinet      use mathscinet to update bibtex entries (less flexible)
 
 **Note:** 
 As described below, you should check the new file for errors before deleting the
 original version of your BibTeX_ file.
 
-By default, bibupdate_ does not change your original database file. Instead, it creates a
+By default, bibupdate_ does not change your original bibtex file. Instead, it creates a
 new file with the name *updated_file.bib*, if your original file was *file.bib*.
-It is also possible to have it replace your current file (use carefully!), or to
-specify an output file.
+It is also possible to have it overwrite your current file (use carefully!), or to
+specify an output filename.
 
 BibTeX_ is widely used by the LaTeX_ community to maintain publication databases.
 This script attempts to add missing fields to the papers in a BibTeX_ database
@@ -695,118 +870,126 @@ BibTeX_ file over the years (for example, incorrect page numbers and publication
 years). Now I use the program to automatically update the preprint entries in my
 database when the papers appear in MathSciNet_ after they are published.
 
-Options and defaults
---------------------
+Options and defaults::
 
--a, --all  Update or validate ALL BibTeX entries
+    -u --update {{all,arxiv,mrlookup,mref,mathscinet}} update mechanism (default: all)
 
-  By default bibupdate_ only checks each BibTeX_ entry with the mrlookup
-  database if the entry does *not* have an ``mrnumber`` field. With this switch
-  all entries are checked and updated.
+      By default bibupdate_ will attempt to update the entries in the supplied
+      BibTeX_ file using the arXiv_ and then cycling through the AMS_ databases 
+      mrlookup_, mref_ and MathSciNet_, in this order until it finds a match. The
+      arXiv_ is only searched if the bibtex entry does not have an `eprint` field
+      and the AMS_ databases are only searched if there is no `mrnumber` field. To
+      change the default behaviour and search only one data
 
--c --check      Check/validate all bibtex entries against a database
+    -a, --all  Update or validate ALL BibTeX entries
 
-  Prints a list of entries in the BibTeX file that have fields different from
-  those given by the corresponding database. The original BibTeX file is not
-  changed.
+      By default bibupdate_ only checks each BibTeX_ entry with the mrlookup
+      database if the entry does *not* have an ``mrnumber`` field. With this switch
+      all entries are checked and updated.
 
--k, --keep_fonts      do NOT replace fonts \Bbb, \germ and \scr in titles
+    -c --check      Check/validate all bibtex entries against a database
 
-  The BibTeX_ entries generated by mrlookup_ use \\Bbb, \\germ and \\scr for the
-  \\mathbb, \\mathfrak and \\mathscr fonts. By default, in the *title* fields,
-  these fonts specifications are automatically changed to the following more
-  LaTeX_ friendly fonts:
+      Prints a list of entries in the BibTeX_ file that have fields different from
+      those given by the corresponding database. The original BibTeX file is not
+      changed.
 
-        - \\Bbb X  --> \\mathbb{{X}}
-        - \\scr X  --> \\mathcal{{X}}
-        - \\germ X --> \\mathfrak{{X}}
+    -k, --keep_fonts      do NOT replace fonts \Bbb, \germ and \scr in titles
 
-  By using the -k option the fonts specification used by MathSciNet are used.
+      The BibTeX_ entries generated by mrlookup_ use \Bbb, \germ and \scr for the
+      \mathbb, \mathfrak and \mathscr fonts. By default, in the *title* fields,
+      these fonts specifications are automatically changed to the following more
+      LaTeX_ friendly fonts:
 
--i FIELDS, --ignored-fields=FIELDS  A string of BibTeX_ fields to ignore when writing the updated file
+            - \Bbb X  --> \mathbb{{X}}
+            - \scr X  --> \mathcal{{X}}
+            - \germ X --> \mathfrak{{X}}
 
-  By default bibupdate_ removes the following fields from each BibTeX_ entry:
+      By using the -k option the fonts specification used by MathSciNet are used.
 
-      - coden
-      - mrreviewer
-      - fjournal
-      - issn
+    -r FIELDS, --remove-fields=FIELDS  BibTeX_ fields to remove when updating file
 
-  This list can be changed using the -i command line option::
+      By default bibupdate_ removes the following fields from each BibTeX_ entry:
 
-     bibupdate -i "coden fjournal" file.bib   # ignore coden and fjournal
-     bibupdate -i coden -i fjournal file.bib  # ignore coden and fjournal
-     bibupdate -i "" file.bib                 # do not ignore any fields
+          - coden
+          - mrreviewer
+          - fjournal
+          - issn
 
--l LOG, --log LOG  Log output to file (defaults to stdout)
+      This list can be changed using the -r command line option::
 
-  Specify a log filename to use for the bibupdate_ messages.
+         bibupdate -r "coden fjournal" file.bib   # ignore coden and fjournal
+         bibupdate -r coden -r fjournal file.bib  # ignore coden and fjournal
+         bibupdate -r "" file.bib                 # do not ignore any fields
 
--m --mrlookup     Use mrlookup to update bibtex entries (default)
+    -l LOG, --log LOG  Log output to file (defaults to stdout)
 
--M --mathscinet   Use mathscinet to update bibtex entries
+      Specify a log filename to use for the bibupdate_ messages.
 
-  By default mrlookup_ is used to update the BibTeX_ entries in the database.
-  This has the advantage of being a free service provided by the American
-  Mathematical Society. A second advantage is the more flexible searching is
-  possible when mrlookup_ is used. It is also possible to update BibTeX_
-  entries using MathSciNet_, however, these searches are currently only possible
-  using the ``mrnumber`` field (so this option only does something if combined
-  with the --all option or the -check option).
+    -m --mrlookup     Use mrlookup to update bibtex entries (default)
 
--o  --overwrite  Overwrite the existing bibtex file with the updated version
+    -M --mathscinet   Use mathscinet to update bibtex entries
 
-  Replace the existing BibTeX_ file with the updated file. A backup version of
-  the original BibTeX_ is made with a .bak extension. it is also possible to
-  specify the output filename as the last argument to bibupdate.
+      By default mrlookup_ is used to update the BibTeX_ entries in the database.
+      This has the advantage of being a free service provided by the American
+      Mathematical Society. A second advantage is the more flexible searching is
+      possible when mrlookup_ is used. It is also possible to update BibTeX_
+      entries using MathSciNet_, however, these searches are currently only possible
+      using the ``mrnumber`` field (so this option only does something if combined
+      with the --all option or the -check option).
 
--q, --quieter    Print fewer messages
+    -o  --overwrite  Overwrite the existing bibtex file with the updated version
 
-  There are three levels of verbosity in how bibupdate_ describes the changes that
-  it is making. These are determined by the q-option as follows::
+      Replace the existing BibTeX_ file with the updated file. A backup version of
+      the original BibTeX_ is made with a .bak extension. it is also possible to
+      specify the output filename as the last argument to bibupdate.
 
-     bibupdate     bibfile.bib    (Defalt) Report all changes
-     bibupdate -q  bibfile.bib    (Warning mode) Only print entries that are changed
-     bibupdate -qq bibfile.bib    (Quiet mode) Only printer error messages
+    -q, --quieter    Print fewer messages
 
-  By default all changes are printed (to stdout, although a log file can be
-  specified by the -l option). In the default mode bibupdate_ will tell you what
-  entries it changes and when it *is not* able to find the paper on the database
-  (either because there are no matches or because there are too many). If it is
-  not able to find the paper and bibupdate_ thinks that the paper is not a
-  preprint then it will mark the missing entry with an exclamation mark, to
-  highlight that it thinks that it should have found the entry in mrlookup_ but
-  failed. Here is some sample output::
+      There are three levels of verbosity in how bibupdate_ describes the changes that
+      it is making. These are determined by the q-option as follows::
 
-    ------------------------------
-    ? did not find Webster:CanonicalBasesHigherRep=Canonical bases and higher representatio
-    ++++++++++++++++++++++++++++++
-    + updating Weyl=
-    + publisher: Princeton University Press
-    +         -> Princeton University Press, Princeton, NJ
-    ------------------------------
-    ? did not find Williamson:JamesLusztig=Schubert calculus and torsion
-    ------------------------------
-    ! did not find QSAII=On Quantitative Substitutional Analysis
+         bibupdate     bibfile.bib    (Default) Report all changes
+         bibupdate -q  bibfile.bib    (Warning mode) Only print entries that are changed
+         bibupdate -qq bibfile.bib    (Quiet mode) Only print error messages
 
-  Each bibtex_ entry is identified by the citation key and the (first 50
-  characters of the sanitised) document title, as specified by your database. Of
-  the three missed entries above, bibupdate_ thinks that the first and third are
-  preprints (they are not marked with an !) and  that the final article should
-  already have been published. With the entry that bibupdate_ found, only the
-  publisher field was changed to include the city of publication.
+      By default all changes are printed (to stdout, although a log file can be
+      specified by the -l option). In the default mode bibupdate_ will tell you what
+      entries it changes and when it *is not* able to find the paper on the database
+      (either because there are no matches or because there are too many). If it is
+      not able to find the paper and bibupdate_ thinks that the paper is not a
+      preprint then it will mark the missing entry with an exclamation mark, to
+      highlight that it thinks that it should have found the entry in mrlookup_ but
+      failed. Here is some sample output::
 
-  In *warning mode*, with the -q option, you are "warned" whenever changes are
-  made to an entry or when the paper is not found in the external datbase. That
-  is, when papers are found (with changes) or when they are missed and
-  bibupdate_ thinks that they are not preprints. In *quiet mode*, with the -qq
-  option, the program only reports when something goes wrong.
+        ------------------------------
+        ? did not find Webster:CanonicalBasesHigherRep=Canonical bases and higher representatio
+        ++++++++++++++++++++++++++++++
+        + updating Weyl=
+        + publisher: Princeton University Press
+        +         -> Princeton University Press, Princeton, NJ
+        ------------------------------
+        ? did not find Williamson:JamesLusztig=Schubert calculus and torsion
+        ------------------------------
+        ! did not find QSAII=On Quantitative Substitutional Analysis
 
--w LEN --wrap LEN    Wrap bibtex fields to specified width
+      Each bibtex_ entry is identified by the citation key and the (first 50
+      characters of the sanitised) document title, as specified by your database. Of
+      the three missed entries above, bibupdate_ thinks that the first and third are
+      preprints (they are not marked with an !) and  that the final article should
+      already have been published. With the entry that bibupdate_ found, only the
+      publisher field was changed to include the city of publication.
 
-  Limits the maximum line length in the output BibTeX_ file. In theory this is
-  supposed to make it easier to compare the updated BibTeX_ file with the
-  original one, however, in practise this doesn't always work.
+      In *warning mode*, with the -q option, you are "warned" whenever changes are
+      made to an entry or when the paper is not found in the external datbase. That
+      is, when papers are found (with changes) or when they are missed and
+      bibupdate_ thinks that they are not preprints. In *quiet mode*, with the -qq
+      option, the program only reports when something goes wrong.
+
+    -w LEN --wrap LEN    Wrap bibtex fields to specified width
+
+      Limits the maximum line length in the output BibTeX_ file. In theory this is
+      supposed to make it easier to compare the updated BibTeX_ file with the
+      original one, however, in practise this doesn't always work.
 
 Known issues
 ------------
@@ -847,24 +1030,19 @@ From the command line type::
       pip install bibupdate
 
 Instead of pip, you should also be able to use easy_install. The program should
-run on python 2.7 and 2.8...I haven't tried python3. You can also clone or
-download_ the git repository and work directly with the source.
+run on python 2.6+ and python 3. You can also clone or download_ the git
+repository and work directly with the source.
 
 Support
 =======
 
 This program is being made available primarily on the basis that it might be
 useful to others. I wrote the program in my spare time and I will support it in
-my spare time, to the extent that I will fix what I consider to be serious
-problems and I may implement feature requests. 
+my spare time.
 
 To do
 =====
 
-- Add interface to the arXiv_ using http://arxiv.org/help/api 
-  or http://arxiv.org/help/oa.
-- Add flag for add list of fields that should not be changed
-- Add an rc file?
 - More intelligent searches using MathSciNet_
 - Add lookup using MRef and, when an entry is not found, allow additional
   searches
@@ -880,7 +1058,7 @@ bibupdate_ Version {version}. Copyright (C) 2012,14
 {license}
 
 This program is free software: you can redistribute it and/or modify it under
-the terms of the GNU_General Public License (GPL_) as published by the Free
+the terms of the GNU General Public License (GPL_) as published by the Free
 Software Foundation, either version 3 of the License, or (at your option) any
 later version.
 
@@ -889,6 +1067,7 @@ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 .. _`Andrew Mathas`: http://www.maths.usyd.edu.au/u/mathas/
+.. _AMS: http://http://www.ams.org
 .. _arXiv: http://arxiv.org/
 .. _BibTeX: http://www.bibtex.org/
 .. _bibupdate: {url}
@@ -897,6 +1076,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 .. _hyperref: http://www.ctan.org/pkg/hyperref
 .. _LaTeX: http://en.wikipedia.org/wiki/LaTeX
 .. _MathSciNet: http://www.ams.org/mathscinet/
+.. _mref: http://www.ams.org/mref
 .. _mrlookup: http://www.ams.org/mrlookup
 .. _Python: https://www.python.org/
 '''.format(**bibup)

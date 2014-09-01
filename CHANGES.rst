@@ -1,11 +1,11 @@
 **v2.0** - TBA
 
-* Added arXiv search(todo)
-* Added rc file (todo)
-* Added preserved bibtex fields (todo)
-* Added multiple look-up searches (todo)
+* Added arXiv search and multiple lookups
+* Added rc file
+* Added preserved bibtex fields
+* Changed several command line options
 * Made compatible with ctan distribution (todo)
-* Now runs under python 3
+* Now compatible with with python 2.6+ and python 3
 
 **v1.3** - August 2014
 
