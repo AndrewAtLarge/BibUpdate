@@ -18,7 +18,7 @@ disable future checking of an entry by giving it an empty ``mrnumber`` field).
 
   bibtexfile            bibtex file to update (required)
 
-  outputfile            output file
+  outputfile            output file (optional)
 
 optional arguments::
 
@@ -172,9 +172,9 @@ Options and defaults::
       There are three levels of verbosity in how bibupdate_ describes the changes that
       it is making. These are determined by the q-option as follows::
 
-         bibupdate     bibfile.bib    (Defalt) Report all changes
+         bibupdate     bibfile.bib    (Default) Report all changes
          bibupdate -q  bibfile.bib    (Warning mode) Only print entries that are changed
-         bibupdate -qq bibfile.bib    (Quiet mode) Only printer error messages
+         bibupdate -qq bibfile.bib    (Quiet mode) Only print error messages
 
       By default all changes are printed (to stdout, although a log file can be
       specified by the -l option). In the default mode bibupdate_ will tell you what
@@ -218,7 +218,7 @@ Options and defaults::
 Known issues
 ------------
 
-\bibupdate_ reads BibTeX_ files using a small number of regular expressions so
+bibupdate_ reads BibTeX_ files using a small number of regular expressions so
 there may be be some corner cases where it fails to extract all of the field
 entries.
 

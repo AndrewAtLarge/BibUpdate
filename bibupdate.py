@@ -18,11 +18,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-See https://bitbucket.org/aparticle/bibupdate for more details
+See https://bitbucket.org/AndrewsBucket/bibupdate for more details
 about the bibupdate program.
 
 Andrew Mathas andrew.mathas@gmail.com
-Copyright (C) 2012, 2014 
+Copyright (C) 2012, 2014, 201, 2015
 '''
 
 ##########################################################
@@ -48,7 +48,8 @@ bibup=MetaData(
     version      = '2.0dev'
 )
 
-# version number of command line help message
+# set version, debugging flag and default warning messages
+bibup.bibupdate_version='%(prog)s, version {version}: {description}\n{license}'.format(**bibup)
 bibup.debugging=False # debugging off by default
 bibup.startup_warnings=[]
 
@@ -118,9 +119,6 @@ else:
        web_page=lookup.read()
        lookup.close()
        return web_page
-
-# this will fail with older versions of python so we add our exception hook first
-bibup.bibupdate_version='%(prog)s, version {version}: {description}\n{license}'.format(**bibup)
 
 # import argparse if possible and quit if we fail
 try:
@@ -194,7 +192,8 @@ bibtex_entry=re.compile('(@\s*[A-Za-z]*\s*{[^@]*})\s*',re.DOTALL)
 # regular expression for cleaning TeX from title etc
 remove_tex=re.compile(r'[{}\'"_$]+')
 remove_mathematics=re.compile(r'\$[^\$]+\$')  # assume no nesting
-# savagely remove all maths from title
+
+# savagely remove all maths from titles
 clean_title=lambda title: remove_tex.sub('',remove_mathematics.sub('',title))
 
 # to help in checking syntax define recognised/valid types of entries in a bibtex database
@@ -208,6 +207,7 @@ fonts_to_replace={ 'Bbb' :'mathbb',
                    'scr' :'mathcal', 
                    'germ':'mathfrak' 
 }
+
 # a factory regular expression to replace expressions like \scr C and \scr{ Cat} in one hit
 font_replacer=re.compile(r'\\(%s)\s*(?:(\w)|\{([\s\w]*)\})' % '|'.join('%s'%f for f in fonts_to_replace.keys()))
 def replace_fonts(string):
@@ -242,6 +242,7 @@ class NonnegativeIntegers(list):
         """
         return isinstance(x,int) and x>=0
 
+# most of the work is hidden in this class
 class Bibtex(OrderedDict):
     r"""
     The bibtex class holds all of the data for a bibtex entry for a manuscript.
@@ -565,13 +566,14 @@ class Bibtex(OrderedDict):
         self.update_arxiv()
         self.update_ams()
 
+# parse rc file and command-line options
 def set_user_options():
     r"""
     Set up and then parse the options to bibupdate using argparse.
     """
     global options, bibup
 
-    # bibupdate defaults - can be overridden from rc file or command line
+    # bibupdate defaults - can be overridden by the rc file or form the command line
     defaults={'all': False,
               'ams-databases': ['mrlookup', 'mrref', 'mathscinet'],
               'check': False,
@@ -614,7 +616,7 @@ def set_user_options():
                         if value in ['all','arxiv','mrlookup','mref','mathscinet']:
                             defaults[option]=value
                         else:
-                            bib_error('illegal update value "{value}" on line {line} of .bibupdaterc file'.format(
+                            bib_error('illegal update value "{value}" o line {line} of .bibupdaterc file'.format(
                                       line=line_num, value=value))
                     elif option!='':
                         defaults[option]=value
@@ -716,6 +718,8 @@ def main():
     r"""
     Open the files and the delegate all of the hard work to the BibTeX class.
     """
+    global options
+
     set_user_options()
 
     # now we are ready to read the BibTeX file and start working
@@ -994,7 +998,7 @@ Options and defaults::
 Known issues
 ------------
 
-\bibupdate_ reads BibTeX_ files using a small number of regular expressions so
+bibupdate_ reads BibTeX_ files using a small number of regular expressions so
 there may be be some corner cases where it fails to extract all of the field
 entries.
 
