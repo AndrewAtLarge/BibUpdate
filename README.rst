@@ -10,7 +10,8 @@ usage: bibupdate [-h] [-H] [-a] [-c] [-k] [-l LOG] [-o] [-p FIELDS] [-r FIELDS] 
                  bibtexfile [outputfile]
 
 This is a command line tool for updating the entries in a BibTeX_ file using
-mrlookup_. By default bibupdate_ tries to update the entry for each paper
+various AMS_ tools (MathSciNet_, mref_, mrlookup_) and the arXiv_.
+By default bibupdate_ tries to update the entry for each paper
 in the BibTeX_ file unless the entry already has an ``mrnumber`` field (you can
 disable future checking of an entry by giving it an empty ``mrnumber`` field).
 
@@ -49,24 +50,24 @@ specify an output filename.
 
 BibTeX_ is widely used by the LaTeX_ community to maintain publication databases.
 This script attempts to add missing fields to the papers in a BibTeX_ database
-file by querying mrlookup_ and getting the missing information from there. This
-is not completely routine because to search on mrlookup_ you need either the
+file by querying the AMS_ databases MathSciNet_, mref_ and mrlookup_. This
+is not completely routine because to search on these databases you need either the
 authors or the title of the article and both of these can have non-standard
 representations. If the article is already published then it is also possible to
-use the publication year and its page numbers. To search on mrlookup_ we:
+use the year of publication year and the page numbers. For these searches we use:
 
-    - use the authors (can be problematic because of accents and names with von etc)
-    - use the page numbers, if they exist
-    - use the year only if there are no page numbers and this is NOT a preprint
-    - use the title if there are no page numbers (or this is a book)
+    - the authors (can be problematic because of accents and names with von etc)
+    - the page numbers, if they exist
+    - the year only if there are no page numbers and this is NOT a preprint
+    - the title if there are no page numbers (or this is a book)
 
-If there is a unique (good, non-fuzzy) match from mrlookup_ then bibupdate_
-replaces all of the current fields with those from mrlookup_, except for the
-citation key. The values of any fields that are not specified by mrlookup_, such
-as ``eprint`` fields, are retained. By default, a message is printed whenever
-existing fields in the database are changed. If the title of the retrieved paper
-does not (fuzzily) match that of the original article then the entry is NOT
-updated and a warning message is printed.
+If there is a unique (good, non-fuzzy) matchthen bibupdate_ replaces all of the
+current fields with those from the databse, except for the citation key. The
+values of any fields that are not specified, such as ``eprint`` fields, are
+retained. By default, a message is printed whenever existing fields in the
+database are changed. If the title of the retrieved paper does not (fuzzily)
+match that of the original article then the entry is NOT updated and a warning
+message is printed.
 
 Although some care is taken to make sure that the new BibTeX_ entries correspond
 to the same paper that the original entry referred to there is always a (small?)
@@ -81,12 +82,12 @@ BibTeX_ fields (any new fields that are added are not printed). Once bibupdate_
 has finished running it is recommended that you compare the old and new versions
 of your database using programs like *diff* and *tkdiff*.
 
-As bibupdate_ calls mrlookup_ this program will only be useful if you have
-papers in your database that are listed in MathSciNet_. As described below it is
-also possible to call MathSciNet_ directly, however, this is less flexible
+As bibupdate_ calls the AMS_ databases this program will only be useful if you
+have papers in your database that are listed in MathSciNet_. As described below
+it is also possible to call MathSciNet_ directly, however, this is less flexible
 because the ``mrnumber`` field for each paper is required.
 
-I wrote this script because I wanted to automatically add links to journals, the
+I wrote this program because I wanted to automatically add links to journals, the
 arXiv_ and DOIs to the bibliographies of my papers using hyperref_. This script
 allowed me to add the missing urls and DOI fields to my BibTeX_ database. As a
 bonus the script helped me to correct many minor errors that had crept into my
@@ -277,7 +278,7 @@ Author
 
 Andrew Mathas
 
-bibupdate_ Version 2.0dev
+bibupdate_ Version 2.0-dev
 
 Copyright (C) 2012, 2014, 2015, 2016
 
