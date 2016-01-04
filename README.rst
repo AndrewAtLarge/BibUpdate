@@ -275,9 +275,11 @@ To do
 Author
 ======
 
-`Andrew Mathas`_
+Andrew Mathas
 
-bibupdate_ Version 2.0dev. Copyright (C) 2012,14 
+bibupdate_ Version 2.0dev
+
+Copyright (C) 2012, 2014, 2015, 2016
 
 GNU General Public License, Version 3, 29 June 2007
 
@@ -290,7 +292,6 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-.. _`Andrew Mathas`: http://www.maths.usyd.edu.au/u/mathas/
 .. _AMS: http://http://www.ams.org
 .. _arXiv: http://arxiv.org/
 .. _BibTeX: http://www.bibtex.org/

@@ -499,23 +499,22 @@ class Bibtex(OrderedDict):
     arxiv_keys_and_vals=re.compile(r'\<(?P<key>[A-Za-z]+)>(?P<val>.*)\<\/(?P=key)>', re.MULTILINE|re.DOTALL)
 
     def update_arxiv(self):
-        """
-        Use the arXiv's API to find link to arxiv
-
+        r"""
+        Use the arXiv's API to find link to the manuscript in the arXiv.
 
         EXAMPLES::
 
-        >>> entry=r'''  <entry>
-        <id>http://arxiv.org/abs/math/0309426v2</id>
-        <updated>2004-07-01T14:37:17Z</updated>
-        <published>2003-09-26T16:40:30Z</published>
-        <title>Elementary divisors of Specht modules</title>
-        </entry>'''
-        >>> arxiv.findall(entry)[0]
-        '\n        <id>http://arxiv.org/abs/math/0309426v2</id>\n        <updated>2004-07-01T14:37:17Z</updated>\n        <published>2003-09-26T16:40:30Z</published>\n        <title>Elementary divisors of Specht modules</title>\n
-        >>> arxiv_keys_and_vals.findall(_)[0]
-        ('id', 'http://arxiv.org/abs/math/0309426v2'), ('updated', '2004-07-01T14:37:17Z'), 
-        ('published', '2003-09-26T16:40:30Z'), ('title', 'Elementary divisors of Specht modules')
+            >>> entry=r'''  <entry>
+            <id>http://arxiv.org/abs/math/0309426v2</id>
+            <updated>2004-07-01T14:37:17Z</updated>
+            <published>2003-09-26T16:40:30Z</published>
+            <title>Elementary divisors of Specht modules</title>
+            </entry>'''
+            >>> arxiv.findall(entry)[0]
+            '\n        <id>http://arxiv.org/abs/math/0309426v2</id>\n        <updated>2004-07-01T14:37:17Z</updated>\n        <published>2003-09-26T16:40:30Z</published>\n        <title>Elementary divisors of Specht modules</title>\n
+            >>> arxiv_keys_and_vals.findall(_)[0]
+            ('id', 'http://arxiv.org/abs/math/0309426v2'), ('updated', '2004-07-01T14:37:17Z'), 
+            ('published', '2003-09-26T16:40:30Z'), ('title', 'Elementary divisors of Specht modules')
         """
         search={}
         if 'author' in self.search:
@@ -549,7 +548,7 @@ class Bibtex(OrderedDict):
 
     def update_ams(self):
         r"""
-        Loop through the list of ams databases until we either exhaust the list
+        Loop through the list of AMS databases until we either exhaust the list
         or find a match.
         """
         db=0
@@ -560,7 +559,7 @@ class Bibtex(OrderedDict):
     def update_all(self):
         r"""
         Update both arXiv and mathscinet entries for the publication. The method
-        first calls update_arxiv() to update the arxiv entry and then
+        first calls update_arxiv() to update the arXiv entry and then
         calls he sequence of methods
            update_mrlookup, update_mrref and mupdate_mathscinet
         until one of them finds a match.
@@ -1058,9 +1057,11 @@ To do
 Author
 ======
 
-`Andrew Mathas`_
+Andrew Mathas
 
-bibupdate_ Version {version}. Copyright (C) 2012,14 
+bibupdate_ Version {version}
+
+Copyright (C) 2012, 2014, 2015, 2016
 
 {license}
 
@@ -1073,7 +1074,6 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-.. _`Andrew Mathas`: http://www.maths.usyd.edu.au/u/mathas/
 .. _AMS: http://http://www.ams.org
 .. _arXiv: http://arxiv.org/
 .. _BibTeX: http://www.bibtex.org/

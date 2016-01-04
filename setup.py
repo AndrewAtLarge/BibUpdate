@@ -54,16 +54,45 @@ file=bibupdate.tar.gz
 preamble=r'''\usepackage[a4paper,margin=20mm]{{geometry}}
 \usepackage{{enumitem}}
 \setlist[description]{{style=unboxed}}% for long usage line
-\usepackage{{titlesec}}
-\titleformat{{name=\section,numberless}}[frame]{{\normalfont}}
-  {{\filright \footnotesize \enspace Version {version}\enspace}}
-  {{8pt}}{{\Large\bfseries\color{{blue}}\filcenter}}
+
+
+\usepackage[svgnames]{{xcolor}}
+\usepackage{{tikz}}
+\usetikzlibrary{{shadows.blur}}
+\tikzset{{shadowed/.style={{blur shadow={{shadow blur steps=5}},
+                          bottom color=LightSkyBlue!30,
+                          draw=MidnightBlue!70,shade,
+                          font=\normalfont\Huge\bfseries\scshape,
+                          rounded corners=8pt,
+                          top color=SkyBlue,
+      }},
+      boxes/.style={{draw=MidnightBlue,
+                    fill=Cornsilk,
+                    font=\sffamily\small,
+                    inner sep=5pt,
+                    rectangle,
+                    rounded corners=8pt,
+                    text=RoyalBlue,
+     }}
+}}
+\def\section#1{{
+  \begin{{tikzpicture}}[remember picture,overlay]
+      \node[yshift=-3cm] at (current page.north west)
+        {{\begin{{tikzpicture}}[remember picture, overlay]
+          \draw[shadowed](30mm,0) rectangle node[white]{{#1}} (\paperwidth-30mm,16mm);
+          \node[anchor=west,boxes] at (4cm,0cm) {{ {author} }};
+          \node[anchor=east,boxes] at (\paperwidth-4cm,0) {{ Version {version} }};
+         \end{{tikzpicture}}
+        }};
+   \end{{tikzpicture}}
+   \vspace*{{20mm}}
+}}
 
 \parindent=0pt
 \parskip=1em
 
 \makeatletter
-\def\@oddfoot{{bibupdate -- {version}\hfill\thepage}}
+\def\@oddfoot{{bibupdate --- Version {version}\hfill\thepage}}
 \makeatother
 
 \usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{{hyperref}}
@@ -91,7 +120,7 @@ elif 'ctan' in sys.argv:
     bibupdate.bibup['today']='{:%d, %b %Y}'.format(datetime.date.today())
     with open('bibupdate.ctan','w') as ctan:
         ctan.write( ctan_specs.format(**bibupdate.bibup) )
-    print('To upload to ctan run: ctanupload -F bibupdate.ctan')  # automate this
+    print('To upload to ctan run: ctanupload -F bibupdate.ctan')  # TODO: automate this?
 
 else:
     setup(name=bibupdate.bibup['name'],
