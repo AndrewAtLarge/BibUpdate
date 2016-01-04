@@ -1,7 +1,28 @@
+r'''
+This is the set up file for bibupdate. In addition to the usual setup tools
+functionality this can be used to generate the rst and pdf file versions of the
+documentation for the package and to upload everything to PyPI, ctan and bitbucket
+The idea is that everything is generated from bibupdate.py to avoid having to
+duplicate the same information in different places.
+
+Usage:
+    > python setup.py readme   -- generate documentation
+    > python setup.py ctan     -- upload package to ctan
+
+    > python setup.py upload   -- upload to PyPI
+    > python setup.py develop  -- install bibupdate in 'development mode'
+
+
+Andrew Mathas andrew.mathas@gmail.com
+Copyright (C) 2012, 2014, 2015, 2016
+'''
+
 from setuptools import setup
 from subprocess import call
 import bibupdate, datetime, sys
 
+# the installation requirements depend on the python version, so generate
+# them dynamically
 install_requires = ['fuzzywuzzy >= 0.2']
 
 # need to do the following properly...there's no point checking the version
@@ -13,7 +34,7 @@ if python_version < (2,6):
 elif python_version==(2,6):
     install_requires += [ 'argparse','ordereddict>=1.1' ]
 
-# for generating ctan release log
+# for the ctan release log
 ctan_specs=r'''# Generated: {today}
 contribution=bibupdate
 version={version}
@@ -22,6 +43,8 @@ email={author_email}
 summary={description}
 directory=/support/bibupdate
 DoNotAnnounce=0
+announce={description}
+notes=Requires python
 license=free
 freeversion=gpl
 file=bibupdate.tar.gz
@@ -59,7 +82,7 @@ if 'readme' in sys.argv:
     with open('README.rst','w') as rst_readme:
       rst_readme.write(bibupdate.__doc__)
 
-    # we set --no-doc-title to stop rst2latex from overwriting the document title above
+    # set --no-doc-title to stop rst2latex from overwriting our custom made document title 
     preamble=' --no-doc-title --latex-preamble="{latex}"'.format(latex=preamble.format( **bibupdate.bibup ))
     call('rst2latex.py {opts} README.rst README.tex'.format(opts=preamble), shell=True)
     call('pdflatex README && pdflatex README', shell=True)
@@ -68,7 +91,7 @@ elif 'ctan' in sys.argv:
     bibupdate.bibup['today']='{:%d, %b %Y}'.format(datetime.date.today())
     with open('bibupdate.ctan','w') as ctan:
         ctan.write( ctan_specs.format(**bibupdate.bibup) )
-    print('To upload to ctan run: ctanupload -F bibupdate.ctan')
+    print('To upload to ctan run: ctanupload -F bibupdate.ctan')  # automate this
 
 else:
     setup(name=bibupdate.bibup['name'],

@@ -135,12 +135,12 @@ try:
 
 except(ImportError):
     try:
-        # in python 2.6 OrderedDict is in ordereddict
+        # from python 2.6 OrderedDict is in ordereddict
         from  ordereddict import OrderedDict
 
     except(ImportError):
         # if we can't load Ordered revert to using dict
-        print('# bibupdate works better with ordered ordered dictionaries')
+        print('# bibupdate works better with ordered dictionaries from ordereddict')
         print('# Upgrade python or use easy_install/pip to install ordereddict')
         OrderedDict=dict
 
@@ -155,11 +155,14 @@ try:
         return fuzz.ratio(one.lower(), two.lower())>90
 
 except(ImportError):
-    print('# bibupdate tries to use fuzzy matching to check the titles any matches.')
-    print('# Unfortunately, this requires the fuzzywuzzy package which is not installed')
+    print('# bibupdate prefers to use fuzzy matching to check the titles for any matches but')
+    print('# this requires the fuzzywuzzy package, which is not installed on your system')
     print('# For more accurate matching use easy_install/pip to install fuzzywuzzy')
     def good_match(one,two):
-        return True
+        r"""
+        Strict matching of `one` and `two`, up to case.
+        """
+        return one.lower()==two.lower()
 
 def bib_print(*args):
     r"""
@@ -245,7 +248,7 @@ class NonnegativeIntegers(list):
 # most of the work is hidden in this class
 class Bibtex(OrderedDict):
     r"""
-    The bibtex class holds all of the data for a bibtex entry for a manuscript.
+    The bibtex class holds all of the data for a bibtex entry of a manuscript.
     It is called with a string <bib_string> that contains a bibtex entry and it
     returns a dictionary with whistles for the bibtex entry together with some
     methods for updating and printing the entry. As the bibtex file is a flat
