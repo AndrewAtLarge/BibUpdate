@@ -628,6 +628,7 @@ def set_user_options():
 
     # now parse the command line arguments using argparse to define the parser
     parser = argparse.ArgumentParser(description=bibup['description'],
+                                     epilog=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('bibtexfile',nargs='?',type=argparse.FileType('r'),help='bibtex file to update')
@@ -654,8 +655,6 @@ def set_user_options():
     parser.add_argument('-w','--wrap',type=int, default=defaults['wrap'], action='store', 
                         choices=NonnegativeIntegers(), metavar='LEN', 
                         help='wrap bibtex fields to specified width')
-    parser.add_argument('-H','--Help',action='store_true', default=False,
-                        help='print full program description')
 
     # suppress printing of these two options
     parser.add_argument('--version',action='version', version=bibup.bibupdate_version, help=argparse.SUPPRESS)
@@ -665,11 +664,7 @@ def set_user_options():
     options = parser.parse_args()
     options.prog=parser.prog
 
-    if options.Help:
-        # print documentation and exit
-        bib_print(__doc__)
-        sys.exit()
-    elif options.bibtexfile==None:
+    if options.bibtexfile==None:
         bib_error('no bibtex file specified')
 
     if len(options.preserve_fields)>len(defaults['preserve-fields']):
@@ -1017,7 +1012,7 @@ reasons:
   problem because the AMS is LaTeX_ aware.
 * Pages numbers: electronic journals, in particular, often have strange page
   numbers (for example "Art. ID rnm032, 24"). bibupdate_ assumes that page
-  numbers are always given in the format like 4--42.
+  numbers are always given in a format like 4--42.
 * Occasionally MathReviews combines two or more closely related articles. This
   makes it difficult to search for them.
 
