@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 r'''
 ===============================================
@@ -22,7 +22,7 @@ See https://bitbucket.org/AndrewsBucket/bibupdate for more details
 about the bibupdate program.
 
 Andrew Mathas andrew.mathas@gmail.com
-Copyright (C) 2012, 2014, 201, 2015
+Copyright (C) 2012, 2014, 2015
 '''
 
 ##########################################################
@@ -55,13 +55,13 @@ bibup.startup_warnings=[]
 
 ##########################################################
 # now try and import the non-standard modules that we use
-import sys
+import codecs, sys
 python_version=sys.version_info[:2]
 if python_version<(2,6):
     print('bibupdate requires python 2.6 or later. Please upgrade python.')
     sys.exit(1)
 
-# all printing is done via options.log, this hack is necessary in 
+# all printing is done via options.log, this hack is necessary in
 # case here is an error before this is set up properly.
 options=MetaData()
 options.log=sys.stdout
@@ -77,7 +77,7 @@ def CleanExceptHook(type, value, traceback):
     if type == KeyboardInterrupt:
         bib_error('program killed. Exiting...')
     elif (not bibup.debugging or hasattr(sys, 'ps1') or not sys.stdin.isatty()
-            or not sys.stdout.isatty() or not sys.stderr.isatty() 
+            or not sys.stdout.isatty() or not sys.stderr.isatty()
             or issubclass(type, bdb.BdbQuit) or issubclass(type, SyntaxError)):
         sys.__excepthook__(type, value, traceback)
     else:
@@ -104,7 +104,7 @@ import itertools, os, re, shutil, textwrap
 # that opens the web pages and returns its' contents as a string.
 if python_version>=(3,0):
     import urllib.request, urllib.parse, urllib.error
-    urlencode=lambda search: urllib.parse.urlencode(search)
+    url_encode=lambda search: urllib.parse.urlencode(search)
     def url_lookup(url, search=''):
         lookup = urllib.request.urlopen(urllib.request.Request(url, search.encode('utf-8')))
         web_page=lookup.read().decode("utf-8")  # need to convert from byte object to string
@@ -166,7 +166,7 @@ except(ImportError):
 
 def bib_print(*args):
     r"""
-    Default printing mechanism. Defaults to sys.stdout but can be overridden 
+    Default printing mechanism. Defaults to sys.stdout but can be overridden
     by the command line options.
     """
     for a in args:
@@ -200,15 +200,15 @@ remove_mathematics=re.compile(r'\$[^\$]+\$')  # assume no nesting
 clean_title=lambda title: remove_tex.sub('',remove_mathematics.sub('',title))
 
 # to help in checking syntax define recognised/valid types of entries in a bibtex database
-bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incollection', 
-                  'inproceedings', 'manual', 'mastersthesis', 'misc', 'phdthesis', 
+bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incollection',
+                  'inproceedings', 'manual', 'mastersthesis', 'misc', 'phdthesis',
                   'proceedings', 'techreport', 'unpublished'
 ]
 
 # need to massage some of the font specifications returned by mrlookup to "standard" latex fonts.
-fonts_to_replace={ 'Bbb' :'mathbb', 
-                   'scr' :'mathcal', 
-                   'germ':'mathfrak' 
+fonts_to_replace={ 'Bbb' :'mathbb',
+                   'scr' :'mathcal',
+                   'germ':'mathfrak'
 }
 
 # a factory regular expression to replace expressions like \scr C and \scr{ Cat} in one hit
@@ -268,7 +268,7 @@ class Bibtex(OrderedDict):
     # A regular expression to extract a bibtex entry from a string. We assume that
     # the pub_type is a word in [A-Za-z]* and allow the citation key and the
     # contents of the bibtex entry to be fairly arbitrary and of the form: {cite_key, *}.
-    parse_bibtex_entry=re.compile(r'@(?P<pub_type>[A-Za-z]*)\s*\{\s*(?P<cite_key>\S*)\s*,\s*?(?P<keys_and_vals>.*)[,\s]*\}', 
+    parse_bibtex_entry=re.compile(r'@(?P<pub_type>[A-Za-z]*)\s*\{\s*(?P<cite_key>\S*)\s*,\s*?(?P<keys_and_vals>.*)[,\s]*\}',
                                   re.MULTILINE|re.DOTALL)
 
     # To extract the keys and values we need to remove all spaces around equals
@@ -317,9 +317,9 @@ class Bibtex(OrderedDict):
         else:
             self.pub_type=entry.group('pub_type').strip().lower()
             self.cite_key=entry.group('cite_key').strip()
-            keys_and_vals=self.despace_equals.sub('=',entry.group('keys_and_vals'))   # remove spaces around = 
+            keys_and_vals=self.despace_equals.sub('=',entry.group('keys_and_vals'))   # remove spaces around =
             for (key,val,word) in self.keys_and_vals.findall(keys_and_vals):
-                if val=='': 
+                if val=='':
                     val=word                  # val matches {value} whereas word matches word
                 else:
                     val=' '.join(val.split()) # remove any internal space from val
@@ -443,7 +443,7 @@ class Bibtex(OrderedDict):
             if differences!=[] and any(self[key]!='' for key in differences):
                 if options.check:
                     bib_print('%s\n%s=%s\n%s' % ('='*30, self.cite_key, self['title'][:50],
-                                  '\n'.join(' %s: %s\n%s-> %s'%(key,self[key], ' '*len(key), match[key]) 
+                                  '\n'.join(' %s: %s\n%s-> %s'%(key,self[key], ' '*len(key), match[key])
                                         for key in differences)))
                 else:
                     bibup.warning('%s\n+ Updating %s=%s' % ('+'*30, self.cite_key, self['title'][:50]))
@@ -458,7 +458,7 @@ class Bibtex(OrderedDict):
 
         else:  # no good match, or more than one good match
             if not self.is_preprint:
-                bibup.verbose("%s\n%s Didn't find %s=%s"%('-'*30, 
+                bibup.verbose("%s\n%s Didn't find %s=%s"%('-'*30,
                             '!' if self.is_preprint else '!', self.cite_key,
                             self['title'][:40] if 'title' in self else '???'))
             return False # didn't find a match
@@ -513,7 +513,7 @@ class Bibtex(OrderedDict):
             >>> arxiv.findall(entry)[0]
             '\n        <id>http://arxiv.org/abs/math/0309426v2</id>\n        <updated>2004-07-01T14:37:17Z</updated>\n        <published>2003-09-26T16:40:30Z</published>\n        <title>Elementary divisors of Specht modules</title>\n
             >>> arxiv_keys_and_vals.findall(_)[0]
-            ('id', 'http://arxiv.org/abs/math/0309426v2'), ('updated', '2004-07-01T14:37:17Z'), 
+            ('id', 'http://arxiv.org/abs/math/0309426v2'), ('updated', '2004-07-01T14:37:17Z'),
             ('published', '2003-09-26T16:40:30Z'), ('title', 'Elementary divisors of Specht modules')
         """
         search={}
@@ -526,7 +526,7 @@ class Bibtex(OrderedDict):
         except IOError:
             bib_error('unable to connect to %s' % url)
 
-        print web_page
+        print(web_page)
 
         matches=[]
         for match in self.arxiv.findall(web_page):
@@ -652,8 +652,8 @@ def set_user_options():
                         metavar='FIELDS', action='append',help='delete these bibtex fields')
     parser.add_argument('-q','--quieter',action='count', default=defaults['quieter'],
                         help='printer fewer messages')
-    parser.add_argument('-w','--wrap',type=int, default=defaults['wrap'], action='store', 
-                        choices=NonnegativeIntegers(), metavar='LEN', 
+    parser.add_argument('-w','--wrap',type=int, default=defaults['wrap'], action='store',
+                        choices=NonnegativeIntegers(), metavar='LEN',
                         help='wrap bibtex fields to specified width')
 
     # suppress printing of these two options
@@ -709,7 +709,7 @@ def set_user_options():
     bibup.warning=bib_print if options.quieter>=1 else lambda *arg: None
 
     # a shorthand for fixed the fonts (to avoid an if-statement when calling it)
-    bibup.fix_fonts=replace_fonts if not options.keep_fonts else lambda title: title 
+    bibup.fix_fonts=replace_fonts if not options.keep_fonts else lambda title: title
 
 def main():
     r"""
@@ -749,7 +749,7 @@ def main():
 
         # open newfile
         try:
-            newbibfile=open(newfile,'w')
+            newbibfile=codecs.open(newfile,'w', encoding='utf-8', errors='ignore')
             newbibfile.write(papers[:asterisk]) # copy everything up to the first @
         except IOError:
             bib_error('unable to open new bibtex file %s' % newfile)
@@ -816,7 +816,7 @@ optional arguments::
   -h, --help            show this help message and exit
   -H, --Help            print full program description
 
-**Note:** 
+**Note:**
 As described below, you should check the new file for errors before deleting the
 original version of your BibTeX_ file.
 
@@ -877,7 +877,7 @@ Options and defaults::
     -u --update {{all,arxiv,mrlookup,mref,mathscinet}} update mechanism (default: all)
 
       By default bibupdate_ will attempt to update the entries in the supplied
-      BibTeX_ file using the arXiv_ and then cycling through the AMS_ databases 
+      BibTeX_ file using the arXiv_ and then cycling through the AMS_ databases
       mrlookup_, mref_ and MathSciNet_, in this order until it finds a match. The
       arXiv_ is only searched if the bibtex entry does not have an `eprint` field
       and the AMS_ databases are only searched if there is no `mrnumber` field. To
@@ -1004,7 +1004,7 @@ There are a small number of cases where bibupdate_ fails to correctly identify
 papers that are listed in MathSciNet_. These failures occur for the following
 reasons:
 
-* Apostrophes: Searching for a title that contains, for example, "James's Conjecture" 
+* Apostrophes: Searching for a title that contains, for example, "James's Conjecture"
   confuses mrlookup_.
 * Ambiguous spelling: Issues arise when there are multiple ways to spell a
   given author's name. This can often happen if the surname involves accents

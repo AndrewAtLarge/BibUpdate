@@ -23,7 +23,7 @@ import bibupdate, datetime, sys
 
 # the installation requirements depend on the python version, so generate
 # them dynamically
-install_requires = ['fuzzywuzzy >= 0.2']
+install_requires = ['fuzzywuzzy >= 0.2', 'python-levenshtein']
 
 # need to do the following properly...there's no point checking the version
 # number on the system creating the distribution.
