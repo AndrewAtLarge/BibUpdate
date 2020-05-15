@@ -348,7 +348,7 @@ class Bibtex(OrderedDict):
         if len(matches)==1:
             match=matches[0]
             differences=[key for key in match if key not in options.ignored_fields and self[key]!=match[key]]
-            if differences!=[] and any(self[key]!='' for k in differences):
+            if differences!=[] and any(self[key]!='' for key in differences):
                 if options.check:
                     bib_print('%s\n%s=%s\n%s' % ('='*30, self.cite_key, self['title'][:50],
                                   '\n'.join(' %s: %s\n%s-> %s'%(key,self[key], ' '*len(key), match[key]) 
