@@ -428,6 +428,20 @@ class Bibtex(OrderedDict):
             search={'fmt': 'bibtex', 'pg1': 'MR', 's1': self['mrnumber'].split()[0]}
             self.update_entry('http://www.ams.org/mathscinet/search/publications.html', search, False)
 
+    def mref(self):
+        """
+        Use Mref to check/update the entry.
+        Mref takes a free-form reference so we give it the whole entry to play with.
+        """
+        # only check mrlookup for books or articles for which we don't already have an mrnumber field
+        if not options.all and (self.has_key('mrnumber')
+                                or self.pub_type not in ['book','article','inproceedings','incollection']):
+            return
+        search = {'mref-submit' : "Search", 'dataType': 'bibtex'}
+        search['ref'] = ''.join("%s\n"% self[key] for key in self.keys())
+
+        self.update_entry('https://mathscinet.ams.org/mathscinet-mref', search)
+        
 def process_options():
     r"""
     Set up and then parse the options to bibupdate using argparse.
@@ -453,13 +467,14 @@ def process_options():
     parser.add_argument('-l','--log', default=sys.stdout, type=argparse.FileType('w'),
                         help='log messages to specified file (defaults to stdout)')
 
-    # add a mutually exclusive switch for choosing between mrlookup and mathscinet
+    # add a mutually exclusive switch for choosing between mrlookup, mathscinet and mref
     lookup=parser.add_mutually_exclusive_group()
     lookup.add_argument('-m','--mrlookup',action='store_const',const='mrlookup',dest='lookup',
                         default='mrlookup',help='use mrlookup to update bibtex entries (default)')
     lookup.add_argument('-M','--mathscinet',action='store_const',const='mathscinet',dest='lookup',
                         help='use mathscinet to update bibtex entries (less flexible)')
-
+    lookup.add_argument('-n','--mref',action='store_const',const='mref',dest='lookup',
+                        help='use mref to update bibtex entries')
     parser.add_argument('-o','--overwrite',action='store_true', default=False,
                         help='overwrite existing bibtex file')
     parser.add_argument('-q','--quieter',action='count', default=2,
