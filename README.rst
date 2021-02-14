@@ -261,17 +261,9 @@ repository and work directly with the source.
 Support
 =======
 
-This program is being made available primarily on the basis that it might be
-useful to others. I wrote the program in my spare time and I will support it in
-my spare time.
-
-To do
-=====
-
-- More intelligent searches using MathSciNet_
-- Add lookup using MRef and, when an entry is not found, allow additional
-  searches
-- Fix the wrapping of bibtex fields.
+This program is being made available primarily on the basis that it might
+be useful to others. I wrote the program in my spare time and I will support
+it in my spare time.
 
 Author
 ======
