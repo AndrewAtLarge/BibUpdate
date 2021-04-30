@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 r'''
 ===============================================
@@ -22,32 +22,38 @@ See https://bitbucket.org/aparticle/bibupdate for more details
 about the bibupdate program.
 
 Andrew Mathas andrew.mathas@gmail.com
-Copyright (C) 2012, 2014 
+Copyright (C) 2012, 2014
 '''
+
+######################################################
+import itertools
+import os
+import re
+import shutil
+import sys
+import textwrap
+import urllib
 
 ##########################################################
 # Define bibupdate's meta data. Used for global variables, to generate the
 # doc-string and README files and in setup.py
-class MetaData(dict):
+class Settings(dict):
     r"""
     A dummy class for hiding meta data and global variables.
     """
-    def __init__(self, *args, **key_wd_args):
-        super(MetaData, self).__init__(self, *args, **key_wd_args)
+    def __init__(self, ini_file):
+        super(Settings, self).__init__(self)
+        with open(ini_file) as ini:
+            for line in ini:
+                key, val = [w.strip() for w in line.split('=')]
+                if key != '':
+                    setattr(self, key.lower().strip(), val.strip())
 
 
 # The following meta data will be used to generate the __doc__ string below and
 # it is used in setup.py.
-bibup=MetaData(
-    author       = 'Andrew Mathas',
-    author_email = 'andrew.mathas@gmail.com',
-    description  = 'Automatically update the entries of a bibtex file',
-    keywords     = 'bibtex, mrlookup, MathSciNet, latex',
-    license      = 'GNU General Public License, Version 3, 29 June 2007',
-    name         = 'bibupdate',
-    url          = 'https://bitbucket.org/AndrewsBucket/bibupdate',
-    version      = '1.3'
-)
+file = lambda f: os.path.join(os.path.dirname(__file__), f)
+bibup=Settings( file('bibupdate.ini') )
 
 # version number of command line help message
 bibup.debugging=False # debugging off by default
@@ -55,14 +61,7 @@ bibup.startup_warnings=[]
 
 ##########################################################
 # now try and import the non-standard modules that we use
-import sys
 python_version=sys.version_info[:2]
-if python_version<(2,6):
-    print('bibupdate requires python 2.6 or later. Please upgrade python.')
-    sys.exit(1)
-elif python_version>=(3,0):
-    print('bibupdate does not yet run under python 3.0 or higher. Please use python 2.')
-    sys.exit(1)
 
 ##########################################################
 # We trap system errors so that we can exit cleanly when the program is
@@ -74,7 +73,7 @@ def CleanExceptHook(type, value, traceback):
     if type == KeyboardInterrupt:
         bib_error('program killed. Exiting...')
     elif (not bibup.debugging or hasattr(sys, 'ps1') or not sys.stdin.isatty()
-            or not sys.stdout.isatty() or not sys.stderr.isatty() 
+            or not sys.stdout.isatty() or not sys.stderr.isatty()
             or issubclass(type, bdb.BdbQuit) or issubclass(type, SyntaxError)):
         sys.__excepthook__(type, value, traceback)
     else:
@@ -88,11 +87,8 @@ def CleanExceptHook(type, value, traceback):
 # ...and a hook to grab the exception
 sys.excepthook = CleanExceptHook
 
-######################################################
-import itertools, os, re, shutil, textwrap, urllib
-
 # this will fail with older versions of python so we add our exception hook first
-bibup.bibupdate_version='%(prog)s, version {version}: {description}\n{license}'.format(**bibup)
+bibup.bibupdate_version='%(prog)s, version {0.version}: {0.description}\n{0.license}'.format(bibup)
 
 ##########################################################
 # Try and import the (non-standard) modules that we use
@@ -136,7 +132,7 @@ except(ImportError):
 
 def bib_print(*args):
     r"""
-    Default printing mechanism. Defaults to sys.stdout but can be overridden 
+    Default printing mechanism. Defaults to sys.stdout but can be overridden
     by the command line options.
     """
     for a in args:
@@ -169,15 +165,15 @@ remove_mathematics=re.compile(r'\$[^\$]+\$')  # assume no nesting
 clean_title=lambda title: remove_tex.sub('',remove_mathematics.sub('',title))
 
 # to help in checking syntax define recognised/valid types of entries in a bibtex database
-bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incollection', 
-                  'inproceedings', 'manual', 'mastersthesis', 'misc', 'phdthesis', 
+bibtex_pub_types=['article', 'book', 'booklet', 'conference', 'inbook', 'incollection',
+                  'inproceedings', 'manual', 'mastersthesis', 'misc', 'phdthesis',
                   'proceedings', 'techreport', 'unpublished'
 ]
 
 # need to massage some of the font specifications returned by mrlookup to "standard" latex fonts.
-fonts_to_replace={ 'Bbb' :'mathbb', 
-                   'scr' :'mathcal', 
-                   'germ':'mathfrak' 
+fonts_to_replace={ 'Bbb' :'mathbb',
+                   'scr' :'mathcal',
+                   'germ':'mathfrak'
 }
 # a factory regular expression to replace expressions like \scr C and \scr{ Cat} in one hit
 font_replacer=re.compile(r'\\(%s)\s*(?:(\w)|\{([\s\w]*)\})' % '|'.join('%s'%f for f in fonts_to_replace.keys()))
@@ -273,9 +269,9 @@ class Bibtex(OrderedDict):
         else:
             self.pub_type=entry.group('pub_type').strip().lower()
             self.cite_key=entry.group('cite_key').strip()
-            keys_and_vals=self.keys_and_vals.sub('=',entry.group('keys_and_vals'))   # remove spaces around = 
+            keys_and_vals=self.keys_and_vals.sub('=',entry.group('keys_and_vals'))   # remove spaces around =
             for (key,val,word) in self.bibtex_keys.findall(keys_and_vals):
-                if val=='': 
+                if val=='':
                     val=word                  # val matches {value} whereas word matches word
                 else:
                     val=' '.join(val.split()) # remove any internal space from val
@@ -351,7 +347,7 @@ class Bibtex(OrderedDict):
             if differences!=[] and any(self[key]!='' for key in differences):
                 if options.check:
                     bib_print('%s\n%s=%s\n%s' % ('='*30, self.cite_key, self['title'][:50],
-                                  '\n'.join(' %s: %s\n%s-> %s'%(key,self[key], ' '*len(key), match[key]) 
+                                  '\n'.join(' %s: %s\n%s-> %s'%(key,self[key], ' '*len(key), match[key])
                                         for key in differences)))
                 else:
                     bibup.warning('%s\n+ Updating %s=%s' % ('+'*30, self.cite_key, self['title'][:50]))
@@ -364,7 +360,7 @@ class Bibtex(OrderedDict):
 
         else:  # no good match, or more than one good match
             if not self.is_preprint:
-                bibup.verbose("%s\n%s Didn't find %s=%s"%('-'*30, 
+                bibup.verbose("%s\n%s Didn't find %s=%s"%('-'*30,
                             '!' if self.is_preprint else '!', self.cite_key,
                             self['title'][:40] if self.has_key('title') else '???'))
 
@@ -441,50 +437,115 @@ class Bibtex(OrderedDict):
         search['ref'] = ''.join("%s\n"% self[key] for key in self.keys())
 
         self.update_entry('https://mathscinet.ams.org/mathscinet-mref', search)
-        
+
 def process_options():
     r"""
     Set up and then parse the options to bibupdate using argparse.
     """
     global options, bibup
 
-    parser = argparse.ArgumentParser(description='Update and validate BibTeX files',
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description='Update and validate BibTeX files',
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('bibtexfile',nargs='?',type=argparse.FileType('r'),default=None,help='bibtex file to update')
-    parser.add_argument('outputfile',nargs='?',type=str,default=None,help='output file')
+    parser.add_argument('bibtexfile',
+        nargs='?',
+        type=argparse.FileType('r'),
+        default=None,
+        help='bibtex file to update'
+    )
+    parser.add_argument('outputfile',
+        nargs='?',
+        type=str,
+        default=None,
+        help='output file'
+    )
 
-    parser.add_argument('-H','--Help',action='store_true', default=False,
-                        help='print full program description')
-    parser.add_argument('-a','--all',action='store_true',default=False,
-                        help='update or validate ALL BibTeX entries')
-    parser.add_argument('-c','--check',action='store_true', default=False,
-                        help='check/verify all bibtex entries against database')
-    parser.add_argument('-k','--keep_fonts',action='store_true', default=False,
-                        help='do NOT replace fonts \Bbb, \germ and \scr in titles')
-    parser.add_argument('-i','--ignored-fields',type=str,default=['coden','mrreviewer','fjournal','issn'],
-                        metavar='FIELDS', action='append',help='a string of bibtex fields to ignore')
-    parser.add_argument('-l','--log', default=sys.stdout, type=argparse.FileType('w'),
-                        help='log messages to specified file (defaults to stdout)')
+    parser.add_argument('-H','--Help',
+        action='store_true',
+        default=False,
+        help='print full program description'
+    )
+    parser.add_argument('-a','--all',
+        action='store_true',
+        default=False,
+        help='update or validate ALL BibTeX entries'
+    )
+    parser.add_argument('-c','--check',
+        action='store_true',
+        default=False,
+        help='check/verify all bibtex entries against database'
+    )
+    parser.add_argument('-k','--keep_fonts',
+        action='store_true',
+        default=False,
+        help='do NOT replace fonts \Bbb, \germ and \scr in titles'
+    )
+    parser.add_argument('-i','--ignored-fields',
+        type=str,
+        default=['coden','mrreviewer','fjournal','issn'],
+        metavar='FIELDS',
+        action='append',
+        help='a string of bibtex fields to ignore'
+    )
+    parser.add_argument('-l','--log',
+        default=sys.stdout,
+        type=argparse.FileType('w'),
+        help='log messages to specified file (defaults to stdout)'
+    )
 
     # add a mutually exclusive switch for choosing between mrlookup, mathscinet and mref
     lookup=parser.add_mutually_exclusive_group()
-    lookup.add_argument('-m','--mrlookup',action='store_const',const='mrlookup',dest='lookup',
-                        default='mrlookup',help='use mrlookup to update bibtex entries (default)')
-    lookup.add_argument('-M','--mathscinet',action='store_const',const='mathscinet',dest='lookup',
-                        help='use mathscinet to update bibtex entries (less flexible)')
-    lookup.add_argument('-n','--mref',action='store_const',const='mref',dest='lookup',
-                        help='use mref to update bibtex entries')
-    parser.add_argument('-o','--overwrite',action='store_true', default=False,
-                        help='overwrite existing bibtex file')
-    parser.add_argument('-q','--quieter',action='count', default=2,
-                        help='printer fewer messages')
-    parser.add_argument('-w','--wrap',type=int, default=0, action='store', choices=NonnegativeIntegers(),
-                        metavar='LEN', help='wrap bibtex fields to specified width')
+    lookup.add_argument('-m','--mrlookup',
+        action='store_const',
+        const='mrlookup',
+        dest='lookup',
+        default='mrlookup',
+        help='use mrlookup to update bibtex entries (default)'
+    )
+    lookup.add_argument('-M', '--mathscinet',
+        action='store_const',
+        const='mathscinet',
+        dest='lookup',
+        help='use mathscinet to update bibtex entries (less flexible)'
+    )
+    lookup.add_argument('-n', '--mref',
+        action='store_const',
+        const='mref',
+        dest='lookup',
+        help='use mref to update bibtex entries'
+    )
+    parser.add_argument('-o', '--overwrite',
+        action='store_true',
+        default=False,
+        help='overwrite existing bibtex file'
+    )
+    parser.add_argument('-q', '--quieter',
+        action='count',
+        default=2,
+        help='printer fewer messages'
+    )
+    parser.add_argument('-w', '--wrap',
+        type=int,
+        default=0,
+        action='store',
+        choices=NonnegativeIntegers(),
+        metavar='LEN',
+        help='wrap bibtex fields to specified width'
+    )
 
     # suppress printing of these two options
-    parser.add_argument('--version',action='version', version=bibup.bibupdate_version, help=argparse.SUPPRESS)
-    parser.add_argument('-d','--debugging',action='count', default=0, help=argparse.SUPPRESS)
+    parser.add_argument('-v', '--version',
+        action='version',
+        version=bibup.bibupdate_version,
+        help=argparse.SUPPRESS
+    )
+    parser.add_argument('-d','--debugging',
+        action='count',
+        default=0,
+        help=argparse.SUPPRESS
+    )
 
     # parse the options
     options = parser.parse_args()
@@ -499,7 +560,9 @@ def process_options():
 
     if len(options.ignored_fields)>4:
         # if any fields were added then don't ignore the first 4 fields.
-        options.ignored_fields=list(chain.from_iterable([i.lower().split() for i in options.ignored_fields[4:]]))
+        options.ignored_fields=list(chain.from_iterable([i.lower().split()
+                                        for i in options.ignored_fields[4:]])
+        )
 
     # if check==True then we want to check everything
     if options.check:
@@ -526,7 +589,7 @@ def process_options():
     bibup.warning=bib_print if options.quieter>=1 else lambda *arg: None
 
     # a shorthand for fixed the fonts (to avoid an if-statement when calling it)
-    bibup.fix_fonts=replace_fonts if not options.keep_fonts else lambda title: title 
+    bibup.fix_fonts=replace_fonts if not options.keep_fonts else lambda title: title
 
 def main():
     r"""
@@ -596,7 +659,7 @@ __doc__=r'''
 bibupdate
 =========
 
-{description}
+{0.description}
 
 usage: bibupdate [-h|-H] [-a] [-c] [-f] [-i FIELDS] [-l LOG] [-m | -M] [-q] [-r]
                  [-w LEN] bibtexfile [outputfile]
@@ -623,7 +686,7 @@ disable future checking of an entry by giving it an empty ``mrnumber`` field).
   -m, --mrlookup        use mrlookup to update bibtex entries (default)
   -M, --mathscinet      use mathscinet to update bibtex entries (less flexible)
 
-**Note:** 
+**Note:**
 As described below, you should check the new file for errors before deleting the
 original version of your BibTeX_ file.
 
@@ -803,7 +866,7 @@ There are a small number of cases where bibupdate_ fails to correctly identify
 papers that are listed in MathSciNet_. These failures occur for the following
 reasons:
 
-* Apostrophes: Searching for a title that contains, for example, "James's Conjecture" 
+* Apostrophes: Searching for a title that contains, for example, "James's Conjecture"
   confuses mrlookup_.
 * Ambiguous spelling: Issues arise when there are multiple ways to spell a
   given author's name. This can often happen if the surname involves accents
@@ -840,12 +903,12 @@ Support
 This program is being made available primarily on the basis that it might be
 useful to others. I wrote the program in my spare time and I will support it in
 my spare time, to the extent that I will fix what I consider to be serious
-problems and I may implement feature requests. 
+problems and I may implement feature requests.
 
 To do
 =====
 
-- Add interface to the arXiv_ using http://arxiv.org/help/api 
+- Add interface to the arXiv_ using http://arxiv.org/help/api
   or http://arxiv.org/help/oa.
 - Add flag to stop add list of fields that should not be changed
 - More intelligent searches using MathSciNet_
@@ -859,9 +922,9 @@ Author
 
 `Andrew Mathas`_
 
-bibupdate_ Version {version}. Copyright (C) 2012,14 
+bibupdate_ Version {0.version}. Copyright (C) 2012,14
 
-{license}
+{0.license}
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU_General Public License (GPL_) as published by the Free
@@ -875,7 +938,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 .. _`Andrew Mathas`: http://www.maths.usyd.edu.au/u/mathas/
 .. _arXiv: http://arxiv.org/
 .. _BibTeX: http://www.bibtex.org/
-.. _bibupdate: {url}
+.. _bibupdate: {0.url}
 .. _download: http://bitbucket.org/AndrewsBucket/bibupdate/downloads/
 .. _GPL: http://www.gnu.org/licenses/gpl.html
 .. _hyperref: http://www.ctan.org/pkg/hyperref
@@ -883,5 +946,5 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 .. _MathSciNet: http://www.ams.org/mathscinet/
 .. _mrlookup: http://www.ams.org/mrlookup
 .. _Python: https://www.python.org/
-'''.format(**bibup)
+'''.format(bibup)
 
