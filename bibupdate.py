@@ -282,8 +282,8 @@ class Bibtex(OrderedDict):
                     self[lkey]=val
 
             # guess whether this entry corresponds to a preprint
-            self.is_preprint=( (self.has_key('pages') and self['pages'].lower() in ['preprint', 'to appear', 'in preparation'])
-                      or not (self.has_key('pages') and self.has_key('journal')) )
+            self.is_preprint=( ('pages' in self and self['pages'].lower() in ['preprint', 'to appear', 'in preparation'])
+                      or not ('pages' in self and 'journal' in self) )
 
     def __str__(self):
         r"""
@@ -362,7 +362,7 @@ class Bibtex(OrderedDict):
             if not self.is_preprint:
                 bibup.verbose("%s\n%s Didn't find %s=%s"%('-'*30,
                             '!' if self.is_preprint else '!', self.cite_key,
-                            self['title'][:40] if self.has_key('title') else '???'))
+                            self['title'][:40] if 'title' in self else '???'))
 
     def mrlookup(self):
         """
@@ -372,14 +372,14 @@ class Bibtex(OrderedDict):
         finding the correct search parameters.
         """
         # only check mrlookup for books or articles for which we don't already have an mrnumber field
-        if not options.all and (self.has_key('mrnumber')
+        if not options.all and ('mrnumber' in self
            or self.pub_type not in ['book','article','inproceedings','incollection']):
             return
 
         bibup.debug('='*30)
         search={'bibtex':'checked'}   # a dictionary that will contain the parameters for the mrlookup search
 
-        if self.has_key('pages') and not self.is_preprint:
+        if 'pages' in self and not self.is_preprint:
             pages=self.page_nums.search(self['pages'])
             if not pages is None:
                 search['ipage']=pages.group('apage')  # first page
@@ -389,11 +389,11 @@ class Bibtex(OrderedDict):
                 #search['fpage']=self['pages']  # last page
 
         # the year is reliable only if we also have page numbers
-        if self.has_key('year') and (self.pub_type=='book' or search.has_key('ipage')):
+        if 'year' in self and (self.pub_type=='book' or 'ipage' in search):
             search['year']=self['year']
 
         # mrlookup requires either an author or a title
-        if self.has_key('author'):
+        if 'author' in self:
             # mrlookup is latex aware and it does a far better job of parsing
             # authors than we ever will, however, it only recognises authors in
             # the form "Last Name" -- and sometimes with a first initial as
@@ -411,7 +411,7 @@ class Bibtex(OrderedDict):
             if len(authors)>5:
                 search['au']=authors[5:]
 
-        if self.has_key('title') and len(self['title'])>0 and (not search.has_key('ipage') or self.is_preprint):
+        if 'title' in self and len(self['title'])>0 and (not 'ipage' in search or self.is_preprint):
             search['ti']=clean_title(self['title'])
 
         self.update_entry('http://www.ams.org/mrlookup', search)
@@ -420,7 +420,7 @@ class Bibtex(OrderedDict):
         """
         Use MathSciNet to check/update the entry using the mrnumber field, if it exists.
         """
-        if options.all or self.has_key('mrnumber'):
+        if options.all or 'mrnumber' in self:
             search={'fmt': 'bibtex', 'pg1': 'MR', 's1': self['mrnumber'].split()[0]}
             self.update_entry('http://www.ams.org/mathscinet/search/publications.html', search, False)
 
@@ -430,8 +430,7 @@ class Bibtex(OrderedDict):
         Mref takes a free-form reference so we give it the whole entry to play with.
         """
         # only check mrlookup for books or articles for which we don't already have an mrnumber field
-        if not options.all and (self.has_key('mrnumber')
-                                or self.pub_type not in ['book','article','inproceedings','incollection']):
+        if not options.all and ('mrnumber' in self or self.pub_type not in ['book','article','inproceedings','incollection']):
             return
         search = {'mref-submit' : "Search", 'dataType': 'bibtex'}
         search['ref'] = ''.join("%s\n"% self[key] for key in self.keys())
