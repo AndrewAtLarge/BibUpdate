@@ -1,3 +1,6 @@
+|version|
+|pyversion|
+|GPL3|
 
 =========
 bibupdate
@@ -297,3 +300,8 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 .. _mref: http://www.ams.org/mref
 .. _mrlookup: http://www.ams.org/mrlookup
 .. _Python: https://www.python.org/
+.. |version| image:: https://img.shields.io/github/v/tag/AndrewAtLarge/gitcat?color=success&label=version
+.. |pyversion| image:: https://img.shields.io/badge/requires-python3.9%2B-important
+.. |GPL3| image:: https://img.shields.io/badge/license-GPLv3-blueviolet.svg
+   :target: https://www.gnu.org/licenses/gpl-3.0.en.html
+

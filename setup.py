@@ -21,20 +21,14 @@ from setuptools import setup
 from subprocess import call
 import bibupdate, datetime, sys
 
-# the installation requirements depend on the python version, so generate
-# them dynamically
-install_requires = ['fuzzywuzzy >= 0.2', 'python-levenshtein']
+install_requires = [
+  'fuzzywuzzy >= 0.2', 
+  'python-Levenshtein >= 0.12.2'
+]
 
-# need to do the following properly...there's no point checking the version
-# number on the system creating the distribution.
-python_version=sys.version_info[:2]
-if python_version < (2,6):
-    print('bibupdate requires python 2.6 or later. Please upgrade python.')
-    sys.exit(1)
-elif python_version==(2,6):
-    install_requires += [ 'argparse','ordereddict>=1.1' ]
 
-# for the ctan release log
+
+# for generating ctan release log
 ctan_specs=r'''# Generated: {today}
 contribution=bibupdate
 version={version}
@@ -142,8 +136,7 @@ else:
               'Intended Audience :: Science/Research',
               'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
               'Natural Language :: English',
-              'Programming Language :: Python :: 2.6+',
-              'Programming Language :: Python :: 3',
+              'Programming Language :: Python :: 3.7',
               'Topic :: Text Processing',
               'Topic :: Text Processing :: Markup :: LaTeX',
               'Topic :: Utilities'
